@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PGG Suite">
+<title>PGG Suite</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+/* ===================== BASE (shared look with the three sub-apps) ===================== */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; padding: 0;
+  font-family: -apple-system, "Segoe UI", "Microsoft JhengHei", "PingFang TC", Roboto, sans-serif;
+  background: #000; color: #fff;
+  overscroll-behavior: none;
+  -webkit-user-select: none; user-select: none;
+  height: 100%;
+}
+#app { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+.header {
+  display: flex; align-items: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.25);
+  font-size: 20px; font-weight: 600; gap: 10px;
+  min-height: calc(env(safe-area-inset-top, 0px) + 56px);
+}
+.header .title { flex: 1; }
+.header .back-btn { background: transparent; border: none; color: inherit; font-size: 22px; padding: 4px 8px; cursor: pointer; }
+.content { flex: 1; padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 16px); display: flex; flex-direction: column; }
+.content.center { justify-content: center; }
+h2 { font-size: 22px; margin: 8px 0 12px; font-weight: 600; text-align: center; }
+p, label { font-size: 17px; line-height: 1.45; }
+.muted { opacity: 0.7; }
+.qhint { font-size: 13px; opacity: 0.75; margin: 4px 0 0; }
+.divider { border: none; border-top: 1px solid rgba(255,255,255,0.2); margin: 16px 0; }
+.spacer { flex: 1; }
+
+/* ===================== FORM FIELDS ===================== */
+.field { margin-bottom: 14px; }
+.field label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 15px; }
+.field input, .field select {
+  width: 100%; padding: 14px; font-size: 17px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.08); color: #fff;
+}
+.field input::placeholder { color: rgba(255,255,255,0.4); }
+.field select option { color: #000; }
+
+/* ===================== BUTTONS ===================== */
+.btn {
+  display: block; width: 100%; padding: 18px 16px; margin-bottom: 12px;
+  font-size: 17px; font-weight: 600; text-align: center;
+  border-radius: 14px; border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.08); color: #fff; cursor: pointer;
+}
+.btn.primary { background: #3E86D6; border-color: #3E86D6; }
+.btn.outline { background: transparent; }
+.btn small { display:block; font-weight:400; opacity:0.75; font-size:13px; margin-top:4px; }
+
+/* ===================== ROLE CARDS ===================== */
+.role-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 20px 16px; margin-bottom: 14px; border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.25); cursor: pointer;
+}
+.role-card .emoji { font-size: 30px; }
+.role-card .txt { flex: 1; }
+.role-card .txt .t { font-size: 18px; font-weight: 700; }
+.role-card .txt .d { font-size: 13px; opacity: 0.75; margin-top: 2px; }
+.role-card.planner { background: rgba(255,255,255,0.06); }
+.role-card.moderator { background: rgba(62,134,214,0.18); border-color: #3E86D6; }
+.role-card.facilitator { background: rgba(200,81,77,0.18); border-color: #C8514D; }
+.role-card.subject { background: rgba(19,52,59,0.55); border-color: #2fb8a6; }
+.role-card .badge {
+  font-size: 11px; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,0.18);
+}
+
+/* ===================== COLOUR PICKER ===================== */
+.colour-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.colour-dot { width: 42px; height: 42px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; }
+.colour-dot.selected { border-color: #fff; }
+
+/* ===================== TOGGLE ===================== */
+.opt.single {
+  display: flex; align-items: center; gap: 10px; padding: 14px;
+  border-radius: 10px; border: 1px solid rgba(255,255,255,0.25); margin-bottom: 6px; cursor: pointer;
+}
+.opt.single .mark { width: 20px; font-weight: 700; }
+.opt.single.selected { background: rgba(80,200,150,0.18); border-color: #4fd1a5; }
+
+/* ===================== TOAST ===================== */
+.toast {
+  position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%);
+  background: rgba(30,30,30,0.95); color: #fff; padding: 12px 18px; border-radius: 10px;
+  font-size: 15px; z-index: 999; max-width: 85%; text-align: center;
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* =============================================================================
+   PGG SUITE — shell: Character Select + one shared Setup, then hands off into
+   the three original apps (moderator/, field/, survey/) completely unmodified
+   aside from a one-line "⇦ Suite" link on their Home screens.
+
+   Design: this file NEVER re-implements the sub-apps' own logic. It only:
+     1) lets the user pick a role,
+     2) collects the setup fields ONCE (so the same village/run/chief info
+        isn't retyped for every role), and
+     3) pre-seeds that sub-app's own localStorage state (matching its own
+        `makeFreshState()` shape exactly) so its internal router sees
+        `STATE.setup` already populated and skips straight to its Home screen.
+   If a role's app already has a saved session, the shell skips its own Setup
+   screen entirely and hands off immediately (mirrors the field-tested "route
+   = STATE.setup ? 'home' : 'setup'" behaviour already inside each app).
+============================================================================= */
+
+const SHARED_KEY = 'pgg_shared_setup_v1';
+const KEYS = { moderator: 'pgg_moderator_state_v1', facilitator: 'pgg_field_state_v1', subject: 'pgg_survey_state_v1' };
+const FOLDERS = { moderator: 'moderator/index.html', facilitator: 'field/index.html', subject: 'survey/index.html' };
+
+const COLOUR_KEYS = ['Red','Orange','Yellow','Green','Blue','Purple'];
+const COLOUR_HEX = { Red:'#C8514D', Orange:'#E08A3D', Yellow:'#E2C24A', Green:'#6FAE5C', Blue:'#4A8FC8', Purple:'#8A5DB8' };
+
+function loadShared() {
+  try { const s = localStorage.getItem(SHARED_KEY); return s ? JSON.parse(s) : {}; } catch (e) { return {}; }
+}
+function saveShared(obj) {
+  try { localStorage.setItem(SHARED_KEY, JSON.stringify(obj)); } catch (e) {}
+}
+function readRoleState(role) {
+  try { const s = localStorage.getItem(KEYS[role]); return s ? JSON.parse(s) : null; } catch (e) { return null; }
+}
+function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function showToast(msg, ms = 2000) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), ms);
+}
+
+/* ---------- fresh-state builders — mirrors each sub-app's own makeFreshState() ---------- */
+function freshModeratorState() {
+  return {
+    setup: null, started: false, finished: false, stepIndex: 0, roundStartTs: null,
+    timerStepIndex: null, timerRemaining: null, timerEndTs: null,
+    vf: { 1:{}, 2:{} },
+    sessionMeta: { 1:{startTs:null,endTs:null}, 2:{startTs:null,endTs:null} },
+    events: [], chiefSegments: [], material: {},
+    receipt: { sumReceipts:'', offlineTotal:'', vfTokens:'', vfZar:'' },
+    cash: {
+      denoms: [
+        {label:'Notes — denom 1', kind:'notes', face:'', brought:'', remain:''},
+        {label:'Notes — denom 2', kind:'notes', face:'', brought:'', remain:''},
+        {label:'Notes — denom 3', kind:'notes', face:'', brought:'', remain:''},
+        {label:'Coins — denom 1', kind:'coins', face:'', brought:'', remain:''},
+        {label:'Coins — denom 2', kind:'coins', face:'', brought:'', remain:''}
+      ],
+      starting:'', paidOut:'', remaining:''
+    },
+    others: [ {item:'', qty:''}, {item:'', qty:''}, {item:'', qty:''} ],
+    seedsPurchased: '', sessionNotes: ''
+  };
+}
+function freshFieldState() {
+  return {
+    setup: null, currentSection: 0, currentSession: null, currentRound: null,
+    pendingContributions: {1:null,2:null,3:null,4:null},
+    pendingStartTimes: {1:null,2:null,3:null,4:null},
+    pendingTimestamps: {1:null,2:null,3:null,4:null},
+    pendingDecisionSeconds: {1:null,2:null,3:null,4:null},
+    viewedResults: {1:false,2:false,3:false,4:false},
+    finalTotalShown: false,
+    history: {1:[],2:[],3:[],4:[]},
+    lastTotals: { 1:{tokens:0,zar:0}, 2:{tokens:0,zar:0}, 3:{tokens:0,zar:0}, 4:{tokens:0,zar:0} }
+  };
+}
+function freshSurveyState() {
+  return { setup: null, surveys: [], draft: null, editIndex: null, chiefSurveys: [], chiefDraft: null };
+}
+
+/* ---------- router ---------- */
+let VIEW = 'select';   // select | teamsub | setup | plannerDone
+let ROLE = null;       // moderator | facilitator | subject | planner
+let COLOUR_SEL = 'Red';
+let CHIEF_ALLOW = true;
+
+function go(view) { VIEW = view; render(); window.scrollTo(0, 0); }
+
+function chooseRole(role) {
+  if (role === 'planner') { ROLE = 'planner'; go('setup'); return; }
+  const existing = readRoleState(role);
+  if (existing && existing.setup) {
+    // already configured on this device — hand off straight in, no re-asking.
+    try { localStorage.setItem('pgg_suite_shell', '1'); } catch (e) {}
+    location.href = FOLDERS[role];
+    return;
+  }
+  ROLE = role; go('setup');
+}
+
+function render() {
+  const app = document.getElementById('app');
+  if (VIEW === 'select') return renderSelect(app);
+  if (VIEW === 'teamsub') return renderTeamSub(app);
+  if (VIEW === 'setup') return renderSetup(app);
+  if (VIEW === 'plannerDone') return renderPlannerDone(app);
+}
+
+function renderSelect(app) {
+  const has = { moderator: !!(readRoleState('moderator')||{}).setup, facilitator: !!(readRoleState('facilitator')||{}).setup, subject: !!(readRoleState('subject')||{}).setup };
+  app.innerHTML = `
+    <div class="header"><span class="title">PGG Suite</span></div>
+    <div class="content">
+      <p class="muted" style="text-align:center;margin-top:0;">Who is using this device right now?</p>
+      <div class="role-card planner" id="r-planner">
+        <div class="emoji">🗂️</div>
+        <div class="txt"><div class="t">Project Planner</div><div class="d">Configure village / session details for the team</div></div>
+      </div>
+      <div class="role-card moderator" id="r-team">
+        <div class="emoji">👥</div>
+        <div class="txt"><div class="t">Project Team Member</div><div class="d">Moderator or Facilitator</div></div>
+        ${has.moderator||has.facilitator?'<span class="badge">in progress</span>':''}
+      </div>
+      <div class="role-card subject" id="r-subject">
+        <div class="emoji">🙋</div>
+        <div class="txt"><div class="t">Subject</div><div class="d">Post-experiment participant / chief survey</div></div>
+        ${has.subject?'<span class="badge">in progress</span>':''}
+      </div>
+      <div class="spacer"></div>
+      <button class="btn outline" id="r-manage">⚙ Manage saved sessions</button>
+    </div>`;
+  document.getElementById('r-planner').onclick = () => chooseRole('planner');
+  document.getElementById('r-team').onclick = () => go('teamsub');
+  document.getElementById('r-subject').onclick = () => chooseRole('subject');
+  document.getElementById('r-manage').onclick = () => go('manage');
+}
+
+function renderTeamSub(app) {
+  const has = { moderator: !!(readRoleState('moderator')||{}).setup, facilitator: !!(readRoleState('facilitator')||{}).setup };
+  app.innerHTML = `
+    <div class="header"><button class="back-btn" id="back">←</button><span class="title">Project Team Member</span></div>
+    <div class="content">
+      <div class="role-card moderator" id="r-mod">
+        <div class="emoji">🎙️</div>
+        <div class="txt"><div class="t">Moderator</div><div class="d">Runs the session script, timers, chief track, VF</div></div>
+        ${has.moderator?'<span class="badge">in progress</span>':''}
+      </div>
+      <div class="role-card facilitator" id="r-fac">
+        <div class="emoji">🧑‍💼</div>
+        <div class="txt"><div class="t">Facilitator</div><div class="d">Tallies one group's contributions each round</div></div>
+        ${has.facilitator?'<span class="badge">in progress</span>':''}
+      </div>
+    </div>`;
+  document.getElementById('back').onclick = () => go('select');
+  document.getElementById('r-mod').onclick = () => chooseRole('moderator');
+  document.getElementById('r-fac').onclick = () => chooseRole('facilitator');
+}
+
+function renderManage(app) {
+  const rows = ['moderator','facilitator','subject'].map(role => {
+    const st = readRoleState(role);
+    const label = role === 'moderator' ? 'Moderator' : role === 'facilitator' ? 'Facilitator' : 'Subject / Survey';
+    const status = st && st.setup ? `Village ${escapeHtml(st.setup.villageNumber||'')} · Run ${escapeHtml(st.setup.run||1)}` : 'not configured';
+    return `<div class="field">
+        <label>${label} <span class="muted" style="font-weight:400;">— ${status}</span></label>
+        <button class="btn outline" data-reset="${role}" ${st&&st.setup?'':'disabled style="opacity:0.4;"'}>Reset ${label} data</button>
+      </div>`;
+  }).join('');
+  app.innerHTML = `
+    <div class="header"><button class="back-btn" id="back">←</button><span class="title">Manage Saved Sessions</span></div>
+    <div class="content">
+      ${rows}
+      <hr class="divider">
+      <button class="btn outline" id="reset-shared">Reset shared setup fields</button>
+    </div>`;
+  document.getElementById('back').onclick = () => go('select');
+  app.querySelectorAll('[data-reset]').forEach(btn => {
+    btn.onclick = () => {
+      const role = btn.dataset.reset;
+      if (confirm('This clears all saved data for this role on this device. Continue?')) {
+        localStorage.removeItem(KEYS[role]);
+        showToast('Cleared.');
+        go('manage');
+      }
+    };
+  });
+  document.getElementById('reset-shared').onclick = () => {
+    localStorage.removeItem(SHARED_KEY);
+    showToast('Shared setup fields cleared.');
+    go('manage');
+  };
+}
+// route the extra 'manage' view without touching the core render() switch above
+const _origRender = render;
+render = function () { if (VIEW === 'manage') return renderManage(document.getElementById('app')); return _origRender(); };
+
+function backFromSetup() { if (ROLE === 'planner') go('select'); else go('teamsub'); }
+
+function renderSetup(app) {
+  const shared = loadShared();
+  const roleTitle = { planner: 'Project Planner Setup', moderator: 'Moderator Setup', facilitator: 'Facilitator Setup', subject: 'Subject / Survey Setup' }[ROLE];
+  const nameLabel = { moderator: 'Your Name (Moderator)', facilitator: 'Facilitator Name', subject: 'Your Name (Enumerator)' }[ROLE] || '';
+  const today = new Date().toISOString().substring(0, 10);
+
+  let extraHtml = '';
+  if (ROLE === 'moderator') {
+    extraHtml = `
+      <div class="field"><label>${nameLabel}</label><input id="f-name" placeholder=""></div>
+      <div class="field"><label>Chief name / ID (Session 2 — optional)</label><input id="f-chief" value="${escapeHtml(shared.chiefName||'')}"></div>
+      <div class="field"><label>Session PIN (4 digits — used for Jump Dashboard, optional)</label><input id="f-pin" type="tel" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="e.g. 1234"></div>`;
+  } else if (ROLE === 'facilitator') {
+    extraHtml = `
+      <div class="field"><label>${nameLabel}</label><input id="f-name" placeholder=""></div>
+      <div class="field"><label>Session PIN (4 digits — same PIN used throughout the whole experiment)</label><input id="f-pin" type="tel" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="1234"></div>
+      <div class="field"><label>Your Group's Colour</label><div class="colour-row" id="colour-row"></div></div>`;
+  } else if (ROLE === 'subject') {
+    extraHtml = `
+      <div class="field"><label>${nameLabel}</label><input id="f-name" placeholder=""></div>
+      <div class="field"><label>Ward / Traditional Council</label><input id="f-ward" value="${escapeHtml(shared.wardTC||'')}"></div>
+      <div class="field"><label>Chief name / ID</label><input id="f-chief" value="${escapeHtml(shared.chiefName||'')}"></div>
+      <div class="field"><label>Number of groups / colours (max 6)</label><input id="f-ngroups" type="number" inputmode="numeric" min="1" max="6" value="${escapeHtml(shared.numGroups!=null?shared.numGroups:6)}"></div>
+      <div class="field"><label>Members per group</label><input id="f-mpg" type="number" inputmode="numeric" min="1" value="${escapeHtml(shared.membersPerGroup!=null?shared.membersPerGroup:4)}"></div>
+      <p class="qhint">Participant IDs are <b>L_MM</b> (colour letter _ member): Red=R, Orange=O, Yellow=Y, Green=G, Blue=B, Purple=P.</p>
+      <div class="opt single" id="f-chiefallow"><span class="mark"></span><span>Allow listing the Chief (write CHIEF) in network questions</span></div>
+      <p class="qhint">Turned on automatically once a Chief name is entered; tap to override.</p>`;
+  } else if (ROLE === 'planner') {
+    extraHtml = `
+      <div class="field"><label>Chief name / ID</label><input id="f-chief" value="${escapeHtml(shared.chiefName||'')}"></div>
+      <div class="field"><label>Ward / Traditional Council</label><input id="f-ward" value="${escapeHtml(shared.wardTC||'')}"></div>
+      <div class="field"><label>Number of groups / colours (max 6)</label><input id="f-ngroups" type="number" inputmode="numeric" min="1" max="6" value="${escapeHtml(shared.numGroups!=null?shared.numGroups:6)}"></div>
+      <div class="field"><label>Members per group</label><input id="f-mpg" type="number" inputmode="numeric" min="1" value="${escapeHtml(shared.membersPerGroup!=null?shared.membersPerGroup:4)}"></div>`;
+  }
+
+  app.innerHTML = `
+    <div class="header"><button class="back-btn" id="back">←</button><span class="title">${roleTitle}</span></div>
+    <div class="content">
+      <p class="muted" style="margin-top:0;">Fields already entered by another role on this device are pre-filled.</p>
+      <div class="field"><label>Village Number</label><input id="f-vnum" type="number" inputmode="numeric" value="${escapeHtml(shared.villageNumber||'')}"></div>
+      <div class="field"><label>Village Name</label><input id="f-vname" value="${escapeHtml(shared.villageName||'')}"></div>
+      <div class="field"><label>Run</label><input id="f-run" type="number" inputmode="numeric" min="1" value="${escapeHtml(shared.run!=null?shared.run:1)}">
+        <p class="qhint">Enter 2 if this is the second experiment in the same village (and so on).</p>
+      </div>
+      <div class="field"><label>Village Type</label>
+        <select id="f-vtype">
+          <option value="">— select —</option>
+          <option value="FORMER_HOMELAND" ${shared.villageType==='FORMER_HOMELAND'?'selected':''}>FORMER HOMELAND</option>
+          <option value="NON_FORMER_HOMELAND" ${shared.villageType==='NON_FORMER_HOMELAND'?'selected':''}>NON-FORMER HOMELAND</option>
+        </select>
+      </div>
+      <div class="field"><label>Date</label><input id="f-date" type="date" value="${escapeHtml(shared.date||'')}"></div>
+      <hr class="divider">
+      ${extraHtml}
+      <button class="btn primary" id="save">Save &amp; Continue</button>
+    </div>`;
+  if (!document.getElementById('f-date').value) document.getElementById('f-date').value = today;
+  document.getElementById('back').onclick = backFromSetup;
+
+  if (ROLE === 'facilitator') {
+    const row = document.getElementById('colour-row');
+    COLOUR_SEL = COLOUR_SEL || 'Red';
+    COLOUR_KEYS.forEach(c => {
+      const dot = document.createElement('div');
+      dot.className = 'colour-dot' + (c === COLOUR_SEL ? ' selected' : '');
+      dot.style.background = COLOUR_HEX[c];
+      dot.onclick = () => { COLOUR_SEL = c; [...row.children].forEach(el => el.classList.remove('selected')); dot.classList.add('selected'); };
+      row.appendChild(dot);
+    });
+  }
+
+  if (ROLE === 'subject') {
+    const chiefInput = document.getElementById('f-chief');
+    const ca = document.getElementById('f-chiefallow');
+    CHIEF_ALLOW = shared.chiefAllowed !== false && !!chiefInput.value.trim();
+    function paint() {
+      ca.classList.toggle('selected', CHIEF_ALLOW);
+      ca.querySelector('.mark').textContent = CHIEF_ALLOW ? '✓' : '';
+    }
+    paint();
+    chiefInput.oninput = () => { if (chiefInput.value.trim() && !CHIEF_ALLOW) CHIEF_ALLOW = true; if (!chiefInput.value.trim()) CHIEF_ALLOW = false; paint(); };
+    ca.onclick = () => { if (!chiefInput.value.trim()) { showToast('Enter the Chief\u2019s name first'); chiefInput.focus(); return; } CHIEF_ALLOW = !CHIEF_ALLOW; paint(); };
+  }
+
+  document.getElementById('save').onclick = () => onSave(shared);
+}
+
+function onSave(prevShared) {
+  const vnum = document.getElementById('f-vnum').value.trim();
+  const vname = document.getElementById('f-vname').value.trim();
+  const run = document.getElementById('f-run').value.trim();
+  const vtype = document.getElementById('f-vtype').value;
+  const date = document.getElementById('f-date').value;
+  if (!vnum || !vname) { showToast('Please fill in village number and name'); return; }
+  if (!vtype) { showToast('Please select Village Type'); return; }
+  const runNum = parseInt(run, 10);
+  if (!Number.isInteger(runNum) || runNum < 1) { showToast('Run must be a positive integer'); return; }
+
+  const shared = Object.assign({}, prevShared, { villageNumber: vnum, villageName: vname, run: runNum, villageType: vtype, date });
+
+  if (ROLE === 'planner') {
+    const chief = document.getElementById('f-chief').value.trim();
+    const ward = document.getElementById('f-ward').value.trim();
+    const ng = Number(document.getElementById('f-ngroups').value.trim());
+    const mpg = Number(document.getElementById('f-mpg').value.trim());
+    if (!(ng >= 1 && ng <= 6)) { showToast('Number of groups must be 1–6'); return; }
+    if (!(mpg >= 1)) { showToast('Members per group must be at least 1'); return; }
+    Object.assign(shared, { chiefName: chief, wardTC: ward, numGroups: ng, membersPerGroup: mpg });
+    saveShared(shared);
+    go('plannerDone');
+    return;
+  }
+
+  if (ROLE === 'moderator') {
+    const name = document.getElementById('f-name').value.trim();
+    const chief = document.getElementById('f-chief').value.trim();
+    const pin = document.getElementById('f-pin').value.trim();
+    if (!name) { showToast('Please enter your name'); return; }
+    if (pin && !/^\d{4}$/.test(pin)) { showToast('PIN must be 4 digits (or leave blank)'); return; }
+    Object.assign(shared, { chiefName: chief });
+    saveShared(shared);
+    const st = freshModeratorState();
+    st.setup = { villageNumber: vnum, run: runNum, villageName: vname, moderatorName: name, date, villageType: vtype, pin: pin || '', chiefName: chief };
+    localStorage.setItem(KEYS.moderator, JSON.stringify(st));
+    handOff('moderator');
+    return;
+  }
+
+  if (ROLE === 'facilitator') {
+    const name = document.getElementById('f-name').value.trim();
+    const pin = document.getElementById('f-pin').value.trim();
+    if (!name) { showToast('Please enter the facilitator name'); return; }
+    if (!/^\d{4}$/.test(pin)) { showToast('PIN must be 4 digits'); return; }
+    saveShared(shared);
+    const st = freshFieldState();
+    st.setup = { facilitatorName: name, villageName: vname, villageNumber: vnum, run: runNum, villageType: vtype, date, colour: COLOUR_SEL, pin };
+    localStorage.setItem(KEYS.facilitator, JSON.stringify(st));
+    handOff('facilitator');
+    return;
+  }
+
+  if (ROLE === 'subject') {
+    const name = document.getElementById('f-name').value.trim();
+    const ward = document.getElementById('f-ward').value.trim();
+    const chief = document.getElementById('f-chief').value.trim();
+    const ng = Number(document.getElementById('f-ngroups').value.trim());
+    const mpg = Number(document.getElementById('f-mpg').value.trim());
+    if (!name) { showToast('Please enter your name'); return; }
+    if (!(ng >= 1 && ng <= 6)) { showToast('Number of groups must be 1–6'); return; }
+    if (!(mpg >= 1)) { showToast('Members per group must be at least 1'); return; }
+    Object.assign(shared, { chiefName: chief, wardTC: ward, numGroups: ng, membersPerGroup: mpg });
+    saveShared(shared);
+    const st = freshSurveyState();
+    st.setup = { facilitatorName: name, villageName: vname, villageNumber: vnum, villageType: vtype, wardTC: ward, date, run: runNum, numGroups: ng, membersPerGroup: mpg, chiefName: chief, chiefAllowed: CHIEF_ALLOW, roster: [] };
+    localStorage.setItem(KEYS.subject, JSON.stringify(st));
+    handOff('subject');
+    return;
+  }
+}
+
+function handOff(role) {
+  try { localStorage.setItem('pgg_suite_shell', '1'); } catch (e) {}
+  location.href = FOLDERS[role];
+}
+
+function renderPlannerDone(app) {
+  const s = loadShared();
+  app.innerHTML = `
+    <div class="header"><button class="back-btn" id="back">←</button><span class="title">Setup Saved</span></div>
+    <div class="content">
+      <div style="text-align:center;font-size:40px;margin:16px 0;">✅</div>
+      <p style="text-align:center;">Session details saved. Hand the device to the Moderator, Facilitator, or Subject — their setup screen will already be filled in.</p>
+      <hr class="divider">
+      <p class="muted">Village ${escapeHtml(s.villageNumber||'')} · ${escapeHtml(s.villageName||'')} · Run ${escapeHtml(s.run||1)}<br>
+      ${escapeHtml(s.villageType||'')} · Chief: ${escapeHtml(s.chiefName||'—')}<br>
+      ${escapeHtml(s.numGroups||6)} groups × ${escapeHtml(s.membersPerGroup||4)} members</p>
+      <div class="spacer"></div>
+      <button class="btn primary" id="edit">Edit Setup</button>
+      <button class="btn outline" id="home">⇦ Back to Character Select</button>
+    </div>`;
+  document.getElementById('back').onclick = () => go('select');
+  document.getElementById('edit').onclick = () => { ROLE = 'planner'; go('setup'); };
+  document.getElementById('home').onclick = () => go('select');
+}
+
+/* ---------- startup ---------- */
+window.addEventListener('load', () => { render(); });
+</script>
+</body>
+</html>

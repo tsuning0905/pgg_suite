@@ -1,0 +1,1996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PGG Survey">
+<title>PGG Post-Experiment Survey</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+/* ===================== BASE ===================== */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; padding: 0;
+  font-family: -apple-system, "Segoe UI", "Microsoft JhengHei", "PingFang TC", Roboto, sans-serif;
+  /* Deep slate-teal background — deliberately different from the black game app
+     so facilitators never confuse the two, but the same translucent-card UI. */
+  background: #13343b;
+  color: #fff;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  height: 100%;
+}
+/* Inputs MUST stay selectable/editable for data entry */
+input, textarea, select { -webkit-user-select: text; user-select: text; }
+#app { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+/* ===================== HEADER ===================== */
+.header {
+  display: flex; align-items: center;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.25);
+  font-size: 19px; font-weight: 600;
+  gap: 10px;
+  position: sticky; top: 0; z-index: 10;
+  background: #13343b;
+}
+.header .home-btn {
+  background: transparent; border: none; color: inherit;
+  font-size: 22px; padding: 4px 8px; cursor: pointer;
+}
+.header .title { flex: 1; line-height: 1.2; }
+.header .step { font-size: 14px; opacity: 0.85; font-weight: 500; }
+/* progress bar */
+.progress { height: 4px; background: rgba(255,255,255,0.18); }
+.progress > div { height: 100%; background: rgba(255,255,255,0.75); transition: width 0.2s; }
+/* ===================== CONTENT ===================== */
+.content { flex: 1; padding: 16px; display: flex; flex-direction: column; }
+.content.center { justify-content: center; align-items: center; text-align: center; }
+h2 { font-size: 22px; margin: 8px 0 12px; font-weight: 600; }
+h3 { font-size: 17px; margin: 18px 0 6px; font-weight: 600; opacity: 0.95; }
+p, label { font-size: 16px; line-height: 1.45; }
+.big-msg { font-size: 22px; line-height: 1.5; margin: 12px 0; }
+/* ===================== BUTTONS ===================== */
+.btn {
+  display: block; width: 100%;
+  padding: 16px;
+  margin: 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  background: rgba(255,255,255,0.22);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: center;
+}
+.btn:active { background: rgba(255,255,255,0.35); }
+.btn.primary { background: rgba(255,255,255,0.34); }
+.btn.outline { background: transparent; border: 1.5px solid rgba(255,255,255,0.6); }
+.btn.danger { background: transparent; border: 1.5px solid rgba(255,180,180,0.7); color: #ffdede; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-row { display: flex; gap: 12px; }
+.btn-row .btn { flex: 1; }
+/* ===================== INPUTS ===================== */
+.field { margin: 14px 0; }
+.field label { display: block; margin-bottom: 6px; font-size: 14px; opacity: 0.9; }
+.field input, .field select, input.txt, input.num {
+  width: 100%;
+  padding: 13px;
+  font-size: 17px;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.5);
+  border-radius: 14px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.field input:focus, input.txt:focus, input.num:focus { border-color: #fff; }
+input::placeholder { color: rgba(255,255,255,0.45); }
+input:disabled { opacity: 0.4; }
+select option { color: #000; }
+/* ===================== QUESTION CARD ===================== */
+.qcard {
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 14px 14px 12px;
+  margin: 12px 0;
+}
+.qcard .qnum {
+  display: inline-block;
+  font-weight: 700; font-size: 13px;
+  background: rgba(255,255,255,0.25);
+  padding: 2px 8px; border-radius: 999px;
+  margin-bottom: 6px;
+}
+.qcard .qtext { font-size: 16px; line-height: 1.4; margin: 2px 0 4px; }
+.qcard.invalid { border-color: rgba(255,140,140,0.9); }
+.qhint { font-size: 13px; opacity: 0.75; margin: 4px 0; }
+.qerr { font-size: 13px; color: #ffd0d0; margin: 6px 0 0; min-height: 0; }
+/* ===================== OPTION ROWS ===================== */
+.opts { margin-top: 6px; }
+.opt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px;
+  margin: 6px 0;
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.28);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 15px; line-height: 1.3;
+}
+.opt:active { background: rgba(255,255,255,0.18); }
+.opt .mark {
+  flex: 0 0 22px; width: 22px; height: 22px;
+  border: 2px solid rgba(255,255,255,0.6);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.opt.single .mark { border-radius: 50%; }
+.opt.multi .mark { border-radius: 6px; }
+.opt.selected { background: rgba(255,255,255,0.30); border-color: #fff; }
+.opt.selected .mark { background: #fff; color: #13343b; border-color: #fff; }
+/* services grid */
+.svc-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 4px; border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.svc-row .svc-label { flex: 1; font-size: 14px; }
+.svc-row .svc-btns { display: flex; gap: 6px; }
+.svc-row .yn {
+  padding: 7px 14px; border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.06); cursor: pointer; font-size: 14px;
+}
+.svc-row .yn.on { background: #fff; color: #13343b; border-color: #fff; font-weight: 700; }
+/* ===================== NOTES / BANNERS ===================== */
+.note {
+  background: rgba(255,255,255,0.10);
+  border-left: 4px solid rgba(255,255,255,0.6);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 14px; line-height: 1.5;
+  margin: 12px 0;
+}
+.note .flag { font-weight: 700; }
+.story {
+  background: rgba(0,0,0,0.22);
+  border-radius: 12px;
+  padding: 14px;
+  font-style: italic;
+  font-size: 15px; line-height: 1.55;
+  margin: 12px 0;
+}
+.warning {
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px; padding: 14px; font-size: 14px; margin: 10px 0;
+}
+.subhead { font-weight: 700; font-size: 16px; margin: 16px 0 4px; }
+/* ===================== TAP CHIPS (network IDs / skip pills) ===================== */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.chip {
+  display: inline-flex; flex-direction: column; align-items: center;
+  padding: 9px 13px; border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.06);
+  font-size: 15px; font-weight: 600; line-height: 1.1;
+  cursor: pointer; min-width: 44px; text-align: center;
+}
+.chip:active { background: rgba(255,255,255,0.18); }
+.chip.on { background: #fff; color: #13343b; border-color: #fff; }
+.chip .chip-name { font-size: 10px; font-weight: 500; opacity: 0.75; margin-top: 2px; }
+.chip.on .chip-name { opacity: 0.7; }
+.chip.na { border-style: dashed; }
+.chip.chief.on { background: #ffe9b3; }
+.chip.skip { padding: 9px 13px; font-size: 13px; }
+.chip.skip.on { background: #ffd9d9; color: #7a1f1f; border-color: #ffd9d9; }
+.qwarn { font-size: 13px; color: #ffe1a8; margin: 6px 0 0; min-height: 0; }
+.opt-disabled { opacity: 0.4; }
+/* ===================== REVIEW ===================== */
+.issue {
+  border-radius: 12px; padding: 12px 14px; margin: 8px 0; font-size: 14px; line-height: 1.4;
+  cursor: pointer;
+}
+.issue.hard { background: rgba(200,60,60,0.35); border: 1px solid rgba(255,150,150,0.6); }
+.issue.soft { background: rgba(220,170,60,0.28); border: 1px solid rgba(255,210,120,0.6); }
+.issue .itag { font-weight: 700; margin-right: 6px; }
+.ack-row { display: flex; align-items: flex-start; gap: 10px; margin: 14px 0; font-size: 14px; }
+.ack-row input { width: 22px; height: 22px; margin-top: 2px; }
+/* ===================== LIST CARDS ===================== */
+.list-card {
+  background: rgba(255,255,255,0.14);
+  border-radius: 14px;
+  padding: 14px;
+  margin: 8px 0;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer;
+}
+.list-card .lc-main { flex: 1; }
+.list-card .lc-id { font-weight: 700; font-size: 16px; }
+.list-card .lc-sub { font-size: 13px; opacity: 0.8; }
+.list-card .lc-badge { font-size: 12px; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,0.25); }
+/* ===================== UTILITY ===================== */
+.spacer { flex: 1; }
+.muted { opacity: 0.85; }
+hr.divider { border: none; border-top: 1px solid rgba(255,255,255,0.35); margin: 16px 0; }
+.toast {
+  position: fixed; bottom: 20px; left: 20px; right: 20px;
+  background: rgba(0,0,0,0.88); color: #fff; padding: 14px; border-radius: 12px;
+  text-align: center; font-size: 15px; z-index: 1000;
+}
+.sticky-foot {
+  position: sticky; bottom: 0;
+  background: #13343b;
+  padding: 10px 0 4px;
+  border-top: 1px solid rgba(255,255,255,0.2);
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* =============================================================================
+   PGG POST-EXPERIMENT SURVEY — single-file offline PWA
+   Reproduces Post_Experiment_Survey_isiXhosa_EC_V2 (Q1-Q58) and enforces the
+   skip / range / consistency / exclusivity validation logic.
+   All data is stored in localStorage so the app works fully offline.
+   UI language mirrors the sibling PGG Field App (translucent cards, dark base).
+============================================================================= */
+/* ---------- OPTION SETS (reused) ---------- */
+const FREQ   = ["Never","Just once or twice","A few times","Often"];
+const LIKERT = ["Strongly agree","Agree","Neither agree nor disagree","Disagree","Strongly disagree"];
+const CONF   = ["Not at all confident","Slightly confident","Moderately confident","Very confident","Completely confident"];
+const SPEED  = ["Within a few days","Within a few weeks","Within a few months","Within a year","More than a year"];
+const PAYL   = ["Very unlikely","Somewhat unlikely","Neither","Somewhat likely","Very likely"];
+const LAW    = ["Only written law","Mostly written law","Equally both","Mostly customary law (umthetho wesithethe)","Only customary law"];
+const STMT5  = ["1 Agree very strongly with Statement 1","2 Agree with Statement 1","3 Agree with neither","4 Agree with Statement 2","5 Agree very strongly with Statement 2"];
+/* ---------- PARTICIPANT ID: format is L_MM (group-colour letter _ member) ----------
+   Group colour -> letter: Red=R, Orange=O, Yellow=Y, Green=G, Blue=B, Purple=P.
+   Members within a group: 01..04. So Red member 1 = "R_01", Purple member 4 = "P_04". */
+const GROUP_COLORS = ["Red","Orange","Yellow","Green","Blue","Purple"];
+const COLOUR_LETTERS = ['R','O','Y','G','B','P'];
+function pad2(n){ return String(n).padStart(2,'0'); }
+function makeId(g,m){ return (COLOUR_LETTERS[g-1]||pad2(g))+'_'+pad2(m); }
+/* parse a "L_MM" token -> {g,m} or null (L = single letter R/O/Y/G/B/P, or legacy 2-digit number) */
+function parsePid(tok){
+  const s=String(tok==null?'':tok).trim();
+  // New letter format: R_01, B_03, etc.
+  const mtL=/^([ROYGBProygbp])[_\-](\d{1,2})$/.exec(s);
+  if(mtL){
+    const g=COLOUR_LETTERS.indexOf(mtL[1].toUpperCase())+1;
+    const m=parseInt(mtL[2],10);
+    return g>=1?{g,m}:null;
+  }
+  // Legacy numeric format: 01_01, 05_02 etc. (for backward compatibility)
+  const mtN=/^(\d{1,2})[_\-](\d{1,2})$/.exec(s);
+  return mtN?{g:parseInt(mtN[1],10), m:parseInt(mtN[2],10)}:null;
+}
+function numGroups(setup){ const n=Number(setup&&setup.numGroups); return (n>=1&&n<=GROUP_COLORS.length)?n:GROUP_COLORS.length; }
+function membersPerGroup(setup){ const n=Number(setup&&setup.membersPerGroup); return n>=1?n:4; }
+function validPid(g,m,setup){ return Number.isInteger(g)&&Number.isInteger(m)&&g>=1&&g<=numGroups(setup)&&m>=1&&m<=membersPerGroup(setup); }
+function idOrder(id){ const p=parsePid(id); return p?(p.g*1000+p.m):999999; }
+/* CSV participant_id: {village}_{run}_{colour_letter}_{member}, e.g. 01_01_B_02. twoPart is "L_MM". */
+function participantIdFull(village, run, twoPart){
+  return pad2(Number(village)||0)+'_'+pad2(Number(run)||1)+'_'+String(twoPart||'');
+}
+/* ---------- QUESTION SCHEMA ----------
+   type drives both rendering and validation.
+     single   : choose exactly one (opts)
+     multi    : choose any (opts), with `exclusive` options
+     likert / single-with-options : single
+     statement5: single with two anchor statements
+     idself   : internal only (self ID, auto-filled from the survey ID; not a numbered question)
+     idlist   : free text list of participant numbers / N/A
+     number   : numeric entry
+     text     : free text
+     services : Q51 Yes/No grid
+     amount500: Q34 (amount 1-1000 OR N/A, conditional on Q33)
+     prizeAB  : Q35 (conditional on Q34)
+     yesno    : simple Yes/No
+     landuse  : Q52 (Yes/No + acquisition methods + other)
+     livedout : Q55 (Yes/No + where + duration)
+   `other:true` adds an "Other: ___" free-text reveal.
+   `optional:true` suppresses the unanswered-flag at review.
+============================================================================= */
+const SVC_ROWS = [
+  {key:"electricity",   label:"Electricity"},
+  {key:"piped_inside",  label:"Piped water inside dwelling"},
+  {key:"piped_yard",    label:"Piped water in yard"},
+  {key:"communal_tap",  label:"Communal tap (standpipe)"},
+  {key:"flush_inside",  label:"Flush toilet (inside)"},
+  {key:"flush_outside", label:"Flush toilet (outside)"},
+  {key:"pit_latrine",   label:"Pit latrine / VIP"},
+  {key:"bucket",        label:"Bucket system"}
+];
+const LANDUSE_METHODS = [
+  "Allocated by the inkosi / Traditional Council",
+  "Permission to Occupy (PTO)",
+  "Communal grazing — no individual allocation",
+  "Registered title deed",
+  "Inherited within the family",
+  "Other"
+];
+const Q = {
+  Q1:{t:"freq",  text:"Over the past year, how often have you attended meetings of a church group (other than regular religious services)?", opts:FREQ},
+  Q4:{t:"freq",  text:"Over the past year, how often have you attended meetings of a local commercial organisation such as a business group, spaza association, or farmers' association?", opts:FREQ},
+  Q5:{t:"multi", text:"Over the past year, have you contacted any of the following people about important problems or to give them your views? (Select all that apply)",
+      opts:["The inkosi / ikhosi","The induna or headman","A church leader / umfundisi","A community leader (not traditional)","A ward councillor","A trade union official","None of the above"],
+      exclusive:["None of the above"]},
+  Q6:{t:"single",text:"When you get together with friends or neighbours, would you say you discuss community or political matters?",
+      opts:["Frequently","Occasionally","Never"]},
+  Q8:{t:"idlist", text:"Which participants are household members of yours — e.g. spouse, parent, child, or sibling? (Write participant numbers)"},
+  Q10:{t:"idlist",text:"Which participants share your clan surname (isiduko) but are not close family? (Write participant numbers)"},
+  Q11:{t:"idlist",text:"Which participants are neighbours — living in the adjacent homestead to yours? (Write participant numbers)"},
+  Q12:{t:"idlist",text:"Which participants would you discuss important matters with — e.g. land, farming, finance, disputes, or imbizo decisions? (Write participant numbers)"},
+  Q13:{t:"idlist",text:"Which participants would you borrow money from, lend money to, or exchange gifts with in a financial emergency? (Write participant numbers)"},
+  Q14:{t:"idlist",text:"Which participants do you cooperate with in farming or business activities — e.g. sharing tools, joint herding, ilima work parties, joint trading? (Write participant numbers)"},
+  Q15:{t:"idlist",text:"Which participants are izifiki — newcomers or people from outside your clan area — that you know by name? (Write participant numbers)"},
+  Q16:{t:"single",text:"It is safe to openly express disagreement in this village — including at an imbizo.", opts:LIKERT},
+  Q17:{t:"single",text:"Major decisions in this village are usually made through open discussion (e.g. at an imbizo).", opts:LIKERT},
+  Q19:{t:"single",text:"People in the village usually act for the collective good (ubuntu) — for example, by participating in ilima, maintaining communal water points, or contributing to shared projects.", opts:LIKERT},
+  Q20:{t:"single",text:"Generally speaking, how much do you trust people in your village?",
+      opts:["A lot","Somewhat","Just a little","Not at all"]},
+  Q22:{t:"single",text:"Villagers are able to openly challenge the inkosi's decisions.", opts:LIKERT},
+  Q23:{t:"single",text:"People who have good relationships with the inkosi or induna find it easier to access resources such as land, grants, or jobs.", opts:LIKERT},
+  Q25:{t:"single",text:"When the inkosi makes a decision, how confident are you that this decision will be fair?", opts:CONF,
+      groupHeader:"(a) If they took their dispute to the village inkosi:"},
+  Q26:{t:"single",text:"How quickly do you think the inkosi will make a decision?", opts:SPEED},
+  Q27:{t:"single",text:"How likely is it that Sipho and Thabo will have to make payments — formal or informal — to the inkosi to settle the case?", opts:PAYL},
+  Q28:{t:"single",text:"Will the inkosi rely on written South African law, on isiXhosa customary law (umthetho wesithethe), or equally on both?", opts:LAW},
+  Q29:{t:"single",text:"When the Magistrate's Court makes a decision, how confident are you that this decision will be fair?", opts:CONF,
+      groupHeader:"(b) If they took their dispute to the local Magistrate's Court:"},
+  Q30:{t:"single",text:"How quickly do you think the Magistrate's Court will make a decision?", opts:SPEED},
+  Q31:{t:"single",text:"How likely is it that Sipho and Thabo will have to make payments — formal or informal — to the Magistrate's Court to settle the case?", opts:PAYL},
+  Q32:{t:"single",text:"Will the Magistrate's Court rely on written South African law, on isiXhosa customary law (umthetho wesithethe), or equally on both?", opts:LAW},
+  Q33:{t:"single",text:"If you won a prize of R1000 in this experiment, would you prefer the result to be announced publicly in this room, or communicated to you privately?",
+      opts:["It doesn't matter to me","Announced publicly in this room","Communicated privately"]},
+  Q34:{t:"amount500",text:"If you prefer to receive the result privately, what is the maximum amount you would be willing to pay to keep the result private? (Only answer if you chose 'Communicated privately' above)"},
+  Q37:{t:"single",text:"Gender:", opts:["Male","Female","Other / prefer not to say"]},
+  Q38:{t:"number",text:"Age:", unit:"years", min:0, max:130, intOnly:true},
+  Q39:{t:"single",text:"Marital status:", opts:["Single","Married (civil / legal / customary / ilobolo)","Widowed","Divorced / separated","Cohabitated / Partnership"]},
+  Q40:{t:"single",text:"Highest level of education completed:", opts:["No formal education","Some primary (Grades 1–6)","Completed primary (Grade 7)","Some secondary (Grades 8–11)","Matric / Grade 12","Post-school certificate","Diploma","University degree or above"]},
+  Q41:{t:"text",  text:"Main occupation:", placeholder:"Main occupation"},
+  Q42:{t:"text",  text:"Secondary occupation (if any):", placeholder:"Leave blank if none", optional:true},
+  Q43:{t:"number",text:"Total number of people living in your household, including yourself:", unit:"persons", min:0, max:60, intOnly:true},
+  Q44:{t:"number",text:"Number of working household members (anyone earning income, including grants):", unit:"persons", min:0, max:60, intOnly:true},
+  Q45:{t:"single",other:true,text:"What is the PRIMARY source of your household's income? (Select the most important one)",
+      opts:["Farming / livestock","Wage employment (formal job)","Casual / piece work (temporary)","Informal businesses / spaza / hawking","Government grants (e.g. child support grant, old-age pension, disability grant)","Remittances — money sent by family members from the city or at the mines","Other"]},
+  Q46:{t:"single",text:"Is your household income:", opts:["Regular and predictable","Seasonal (e.g. harvest, contract work)","Irregular","Very uncertain"]},
+  Q47:{t:"single",text:"What is the approximate total monthly income of your household before expenses? (Include wages, grants, remittances, business income)",
+      opts:["No income","Less than R1,000","R1,001 – R5,000","R5,001 – R10,000","R10,001 – R15,000","R15,001 – R20,000","R20,001 – R25,000","More than R25,000"]},
+  Q48:{t:"single",other:true,text:"What is the main material of the roof of your household's dwelling?",
+      opts:["Thatch / grass / traditional materials","Corrugated iron / zinc / metal sheets","Asbestos sheets","Tiles","Concrete / cement slab","Mixed materials","Other"]},
+  Q50:{t:"number",text:"Total number of rooms:", unit:"rooms", min:0, max:40, intOnly:true},
+  Q51:{t:"services",text:"Which of the following services does your household have access to? (Yes or No for each)"},
+  Q52:{t:"landuse",text:"Do you own or have the right to use agricultural land? If yes — how was land access obtained?"},
+  Q53:{t:"yesno", text:"Were you born in this village?"},
+  Q54:{t:"number",text:"How many years have you lived in this village?", unit:"years", min:0, max:130, intOnly:true},
+  Q55:{t:"livedout",text:"Have you ever lived outside this village continuously for more than 6 months? (If yes: where and for how long?)"},
+  Q56:{t:"single",text:"How often do you travel outside this village for any reason — work, visiting family, shopping, medical, church?",
+      opts:["Never","Less than once a year","A few times a year","About once a month","A few times a month","About once a week","Several times a week","Daily"]},
+  Q57:{t:"single",other:true,text:"Main reason for travel:",
+      opts:["Work / employment","Business / trading","Visiting family (e.g. at the mines, Cape Town, East London)","Shopping / accessing services","School / study","Medical / clinic","Church / religious gathering","Other"]},
+  Q58:{t:"text",  text:"Mobile phone number (in case the research team needs to follow up):", placeholder:"Optional", optional:true}
+};
+const SECTIONS = [
+  {n:1, title:"Civic Participation", note:"Read: \u201CThe following questions ask about your participation in local groups. Please answer based on your own experience.\u201D", ids:["Q1","Q4","Q5","Q6"]},
+  {n:2, title:"Social Network Mapping", instruction:"Every participant in this session wears a chest sticker showing their colour-letter ID (for example R_03 = Red, member 3). The Chief is shown by name, with no number. Answer by writing the applicable participant IDs (e.g. R_03, B_01). To include the Chief, write CHIEF. If no one applies, write \u201CN/A\u201D.", ids:["Q8","Q10","Q11","Q12","Q13","Q14","Q15"]},
+  {n:3, title:"Views of the Community", ids:["Q16","Q17","Q19","Q20"]},
+  {n:4, title:"Perceptions", note:"Read: \u201CThe following questions ask about your views of your inkosi.\u201D", ids:["Q22","Q23"]},
+  {n:5, title:"Hypothetical Justice Vignette",
+   note:"Read the vignette story aloud exactly as written. Do not summarise or paraphrase.",
+   story:"According to Sipho, a particular piece of land has always been in his family and is his to use for farming. But his neighbour Thabo started farming on it this year, claiming that he had the right to use the land because Sipho had not been using it. The two neighbours could not come to an agreement about who should be able to use the land, so they took their dispute to either (a) the village inkosi, or (b) the local Magistrate\u2019s Court \u2014 the lowest-level formal court in South Africa.",
+   ids:["Q25","Q26","Q27","Q28","Q29","Q30","Q31","Q32"]},
+  {n:6, title:"Hypothetical Prize-Winning Scenario", ids:["Q33","Q34"]},
+  {n:7, title:"Demographic Information", note:"The following sections collect demographic information for analysis. All responses remain confidential and are used only by the research team.", ids:["Q37","Q38","Q39","Q40","Q41","Q42","Q43","Q44"]},
+  {n:8, title:"Economic Background", ids:["Q45","Q46","Q47","Q48","Q50","Q51","Q52"]},
+  {n:9, title:"Village Residency and Mobility", ids:["Q53","Q54","Q55","Q56","Q57","Q58"]}
+];
+const ALL_IDS = SECTIONS.reduce((a,s)=>a.concat(s.ids),[]);
+/* =============================================================================
+   STORAGE
+============================================================================= */
+const LS_KEY = 'pgg_survey_state_v1';
+const IN_SUITE = !!localStorage.getItem('pgg_suite_shell');
+function loadState() {
+  try {
+    const s = localStorage.getItem(LS_KEY);
+    if (s) return JSON.parse(s);
+  } catch (e) {}
+  return null;
+}
+function saveState() { try { localStorage.setItem(LS_KEY, JSON.stringify(STATE)); } catch (e) {} }
+function makeFreshState() {
+  return {
+    setup: null,        // { facilitatorName, villageName, villageNumber, villageType, date, wardTC,
+                        //   run, numGroups, membersPerGroup, chiefName, chiefAllowed, roster:[{id,name}] }
+    surveys: [],        // saved respondents: { id, answers, savedAt, completedBy, run, village }
+    draft: null,        // in-progress: { id, answers }
+    editIndex: null,    // index of survey being edited (null = new)
+    chiefSurveys: [],   // saved chief surveys: { village, run, date, savedAt, answers }
+    chiefDraft: null    // in-progress chief survey
+  };
+}
+let STATE = loadState() || makeFreshState();
+/* =============================================================================
+   ROUTER (mirrors the field app: pushState so hardware back can be intercepted)
+============================================================================= */
+let route = STATE.setup ? 'home' : 'setup';
+let routeArgs = {};
+function go(name, args = {}) {
+  route = name; routeArgs = args;
+  window.scrollTo(0, 0);
+  try { history.pushState({ route:name, routeArgs:args, survey:true }, '', ''); } catch (e) {}
+  render();
+}
+/* =============================================================================
+   HELPERS
+============================================================================= */
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function showToast(msg, ms=2000){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),ms); }
+function blankAnswers(){ const a={}; ALL_IDS.forEach(id=>{ a[id]=defaultAnswer(Q[id].t); if(Q[id].t==='multi'&&Q[id].other) a[id+'__o']=''; }); return a; }
+function defaultAnswer(type){
+  switch(type){
+    case 'multi': return [];
+    case 'services': { const o={}; SVC_ROWS.forEach(r=>o[r.key]=''); return o; }
+    case 'amount500': return {amount:'', na:false};
+    case 'landuse': return {own:'', methods:[], other:''};
+    case 'livedout': return {lived:'', where:'', duration:''};
+    case 'single': case 'statement5': case 'prizeAB': return {choice:'', other:''}; // .other only used when other:true
+    default: return '';
+  }
+}
+function draftAnswers(){ return STATE.draft ? STATE.draft.answers : null; }
+/* parse a free-text list of participant IDs (L_MM); "N/A"/empty => na; "CHIEF" => chief flag */
+function parseIdList(raw){
+  const t=(raw||'').trim();
+  if(!t) return {na:false, ids:[], chief:false, bad:[]};
+  if(/^n\s*\/?\s*a$/i.test(t)) return {na:true, ids:[], chief:false, bad:[]};
+  const toks=t.split(/[\s,;]+/).filter(Boolean);
+  const ids=[], bad=[]; let chief=false;
+  toks.forEach(tok=>{
+    if(/^chief$/i.test(tok)){ chief=true; return; }
+    const p=parsePid(tok);
+    if(p) ids.push(makeId(p.g,p.m)); else bad.push(tok);
+  });
+  return {na:false, ids, chief, bad};
+}
+function isNum(v){ return v!=='' && v!=null && !isNaN(Number(v)); }
+function numVal(v){ return Number(v); }
+/* ---- Required-gating: is a question currently required, and is it answered? ----
+   A question counts as "answered" when an explicit choice exists. All questions
+   in the subject questionnaire are required (idlist carries N/A for "no one applies";
+   there is no Refused / Don't know escape hatch elsewhere). */
+function isVisibleRequired(id, ans){
+  const def=Q[id]; if(!def || def.optional) return false;
+  if(id==='Q34'){ return (ans.Q33&&ans.Q33.choice)==='Communicated privately'; }
+  if(id==='Q57'){ const q56=ans.Q56&&ans.Q56.choice; return !!q56 && q56!=='Never'; }
+  return true;
+}
+function isAnswered(id, ans){
+  const def=Q[id]; const a=ans[id];
+  switch(def.t){
+    case 'multi':   return !!(a&&a.length>0);
+    case 'idlist':  { const p=parseIdList(a); return p.na || p.ids.length>0 || p.chief; }
+    case 'number':  case 'text': return a!=='' && a!=null;
+    case 'yesno':   return !!a;
+    case 'services':return SVC_ROWS.every(r=>!!a[r.key]);
+    case 'amount500':{ const priv=(ans.Q33&&ans.Q33.choice)==='Communicated privately';
+                       if(!priv) return true; return a.na || (isNum(a.amount)&&String(a.amount).trim()!==''); }
+    case 'landuse': return !!a.own;
+    case 'livedout':return !!a.lived;
+    case 'idself':  return true;
+    default:        return !!(a&&a.choice);                          // single / freq / statement5
+  }
+}
+function missingRequired(secNum, ans){
+  const sec=SECTIONS.find(s=>s.n===secNum); if(!sec) return [];
+  return sec.ids.filter(id=>isVisibleRequired(id,ans) && !isAnswered(id,ans));
+}
+/* =============================================================================
+   VALIDATION — pure function. Returns { hard:[], soft:[] } of {sec,q,msg}.
+============================================================================= */
+function validateSurvey(answers, setup){
+  const hard=[], soft=[];
+  const secOf = id => { for(const s of SECTIONS) if(s.ids.includes(id)) return s.n; return null; };
+  const H=(q,msg)=>hard.push({sec:secOf(q), q, msg});
+  const S=(q,msg)=>soft.push({sec:secOf(q), q, msg});
+  const choice = id => (answers[id]&&typeof answers[id]==='object') ? answers[id].choice : answers[id];
+  /* valid participant IDs are L_MM (colour letter _ member); self ID is set once at
+     creation time (renderIdEntry) from constrained dropdowns and is not re-editable
+     as a numbered question, so it is not re-validated here. */
+  const selfId  = answers.Q7 ? String(answers.Q7).trim() : '';
+  /* ---- Q8, Q10\u2013Q15 network lists ---- */
+  const netParsed={};
+  ['Q8','Q10','Q11','Q12','Q13','Q14','Q15'].forEach(id=>{
+    const p=parseIdList(answers[id]); netParsed[id]=p;
+    if(p.bad.length) H(id,'Contains entries that are not valid IDs: '+p.bad.join(', ')+'. Use participant IDs like R_03, the word CHIEF, or N/A.');
+    const outOfRange = p.ids.filter(idStr=>{ const q=parsePid(idStr); return !(q && validPid(q.g,q.m,setup)); });
+    if(outOfRange.length){
+      H(id,'ID(s) not in the valid range: '+[...new Set(outOfRange)].join(', ')+'.');
+    }
+    if(p.chief && setup.chiefAllowed===false) H(id,'The Chief may not be listed as a network contact here.');
+    if(selfId && p.ids.includes(selfId)) H(id,'You cannot list your own ID ('+selfId+') here.');
+  });
+  /* Q8 vs Q11 (same household vs adjacent-homestead neighbour) — soft */
+  const ov811 = netParsed.Q8.ids.filter(n=>netParsed.Q11.ids.includes(n));
+  if(ov811.length) S('Q11','Number(s) appear in both Q8 (same household) and Q11 (adjacent-homestead neighbour): '+ov811.join(', ')+'.');
+  /* ---- Q5 exclusivity (backstop; input layer also enforces) ---- */
+  const q5 = answers.Q5||[];
+  const q5excl = (Q.Q5.exclusive||[]).filter(o=>q5.includes(o));
+  const q5spec = q5.filter(o=>!(Q.Q5.exclusive||[]).includes(o));
+  if(q5excl.length && q5spec.length) H('Q5','\u201C'+q5excl.join(' / ')+'\u201D cannot be combined with specific contacts.');
+  /* ---- Q33 \u2192 Q34 \u2192 Q35 skip logic ---- */
+  const q33 = choice('Q33');
+  const q34 = answers.Q34 || {amount:'',na:false};
+  const q34HasAmount = isNum(q34.amount) && String(q34.amount).trim()!=='' && !q34.na;
+  if(q33!=='Communicated privately'){
+    if(q34HasAmount) H('Q34','Q34 must be N/A unless Q33 = \u201CCommunicated privately\u201D.');
+  }
+  if(q34HasAmount){
+    const amt = numVal(q34.amount);
+    if(amt<1 || amt>1000) H('Q34','Willingness-to-pay must be between 1 and 1000 ZAR.');
+  }
+  /* ---- Range checks ---- */
+  const age = isNum(answers.Q38) ? numVal(answers.Q38) : null;
+  if(answers.Q38!==''){
+    if(!isNum(answers.Q38)) H('Q38','Age is not a number.');
+    else { if(age<18) S('Q38','Age is below 18 \u2014 confirm participant eligibility / consent.');
+           if(age>110) S('Q38','Age over 110 \u2014 please confirm this is correct.'); }
+  }
+  const hh = isNum(answers.Q43)?numVal(answers.Q43):null;
+  if(answers.Q43!=='' && isNum(answers.Q43) && hh<1) H('Q43','Household size must be at least 1 (includes yourself).');
+  const work = isNum(answers.Q44)?numVal(answers.Q44):null;
+  if(work!=null){
+    if(work<0) H('Q44','Number of working members cannot be negative.');
+    if(hh!=null && work>hh) H('Q44','Working members ('+work+') cannot exceed household size ('+hh+').');
+  }
+  const rooms = isNum(answers.Q50)?numVal(answers.Q50):null;
+  if(rooms!=null && rooms<1) H('Q50','Total rooms must be at least 1.');
+  const yrs = isNum(answers.Q54)?numVal(answers.Q54):null;
+  if(yrs!=null){
+    if(yrs<0) H('Q54','Years lived cannot be negative.');
+    if(age!=null && yrs>age) H('Q54','Years lived in village ('+yrs+') cannot exceed age ('+age+').');
+  }
+  /* ---- Q52 land-use skip logic ---- */
+  const lu = answers.Q52||{own:'',methods:[],other:''};
+  if(lu.own==='No' && ((lu.methods&&lu.methods.length) || (lu.other&&lu.other.trim()))) {
+    H('Q52','Land-access method must be empty when the answer is \u201CNo\u201D.');
+  }
+  /* ---- Q55 lived-outside skip logic ---- */
+  const lo = answers.Q55||{lived:'',where:'',duration:''};
+  if(lo.lived==='No' && ((lo.where&&lo.where.trim()) || (lo.duration&&lo.duration.trim()))) {
+    H('Q55','Where / Duration must be empty when the answer is \u201CNo\u201D.');
+  }
+  if(lo.lived==='Yes' && !(lo.where&&lo.where.trim()) && !(lo.duration&&lo.duration.trim())) {
+    S('Q55','Answered \u201CYes\u201D but Where / Duration is blank.');
+  }
+  /* ---- Q56 \u2192 Q57 skip logic ---- */
+  const q56 = choice('Q56');
+  const q57 = choice('Q57');
+  if(q56==='Never' && (q57 || (answers.Q57 && answers.Q57.other && answers.Q57.other.trim()))) {
+    H('Q57','Reason for travel must be N/A when Q56 = \u201CNever\u201D.');
+  }
+  /* ---- Consistency: Q53 / Q54 / Q55 ---- */
+  if(answers.Q53==='Yes' && lo.lived==='No' && yrs!=null && age!=null && (age-yrs)>2){
+    S('Q54','Born here and never lived away, but years lived ('+yrs+') is well below age ('+age+').');
+  }
+  /* ---- Vignette completeness Q25\u2013Q32 ---- */
+  const vmiss = ['Q25','Q26','Q27','Q28','Q29','Q30','Q31','Q32'].filter(id=>!choice(id));
+  if(vmiss.length && vmiss.length<8) S(vmiss[0],'Vignette is partially answered \u2014 missing '+vmiss.join(', ')+'. Both the inkosi and Magistrate sets should be completed.');
+  /* ---- Q51 services sanity ---- */
+  const svc = answers.Q51||{};
+  if(svc.piped_inside==='No' && svc.piped_yard==='No' && svc.communal_tap==='No' &&
+     [svc.piped_inside,svc.piped_yard,svc.communal_tap].every(v=>v!=='')){
+    S('Q51','No piped/communal water source recorded \u2014 please confirm.');
+  }
+  if(svc.flush_inside==='Yes' && svc.flush_outside==='Yes'){
+    S('Q51','Both an inside and an outside flush toilet recorded \u2014 uncommon, please confirm.');
+  }
+  /* ---- General unanswered note (non-blocking) ---- */
+  const unanswered=[];
+  ALL_IDS.forEach(id=>{
+    const def=Q[id]; if(def.optional) return;
+    if(id==='Q34'){ if(q33==='Communicated privately' && !q34HasAmount && !q34.na) unanswered.push(id); return; }
+    if(id==='Q57'){ if(q56 && q56!=='Never' && !q57) unanswered.push(id); return; }
+    const a=answers[id];
+    let empty=false;
+    if(def.t==='multi') empty = !(a&&a.length);
+    else if(def.t==='services') empty = SVC_ROWS.every(r=>!a[r.key]);
+    else if(def.t==='landuse') empty = !a.own;
+    else if(def.t==='livedout') empty = !a.lived;
+    else if(def.t==='yesno') empty = !a;
+    else if(typeof a==='object') empty = !a.choice;
+    else empty = (a==='' || a==null);
+    if(empty) unanswered.push(id);
+  });
+  if(unanswered.length) soft.push({sec:secOf(unanswered[0]), q:'\u2014', msg:unanswered.length+' question(s) left blank: '+unanswered.join(', ')+'. Confirm these were intentionally skipped.'});
+  return {hard, soft};
+}
+/* =============================================================================
+   RENDER
+============================================================================= */
+function render(){
+  const app=document.getElementById('app');
+  const renderers={
+    setup:renderSetup, home:renderHome, idEntry:renderIdEntry,
+    section:renderSection, review:renderReview, viewSurvey:renderViewSurvey,
+    settings:renderSettings, exportData:renderExport, pastExperiments:renderPastExperiments,
+    chiefSurvey:renderChiefSurvey
+  };
+  (renderers[route]||renderHome)(app);
+}
+/* ---------- SETUP ---------- */
+function renderSetup(app){
+  const s = STATE.setup || {};
+  app.innerHTML = `
+    <div class="header"><span class="title">PGG Survey \u2014 Setup</span></div>
+    <div class="content">
+      <p class="muted">Configure this device once for the session. These details are attached to every survey collected on this phone.</p>
+      <div class="field"><label>Facilitator Name</label><input id="f-name" value="${escapeHtml(s.facilitatorName||'')}"></div>
+      <div class="field"><label>Village Name</label><input id="f-vname" value="${escapeHtml(s.villageName||'')}"></div>
+      <div class="field"><label>Village Number</label><input id="f-vnum" type="number" inputmode="numeric" value="${escapeHtml(s.villageNumber||'')}"></div>
+      <div class="field"><label>Run</label><input id="f-run" type="number" inputmode="numeric" min="1" value="${escapeHtml(s.run!=null?s.run:1)}"></div>
+      <p class="qhint">If this is the second time the experiment is run in the same village, enter 2 (and so on for later runs). Default is 1. This keeps the two runs\u2019 data separate.</p>
+      <div class="field"><label>Village Type</label>
+        <select id="f-vtype">
+          <option value="">— select —</option>
+          <option value="FORMER_HOMELAND" ${s.villageType==='FORMER_HOMELAND'?'selected':''}>FORMER HOMELAND</option>
+          <option value="NON_FORMER_HOMELAND" ${s.villageType==='NON_FORMER_HOMELAND'?'selected':''}>NON-FORMER HOMELAND</option>
+        </select>
+      </div>
+      <div class="field"><label>Ward / Traditional Council</label><input id="f-ward" value="${escapeHtml(s.wardTC||'')}"></div>
+      <div class="field"><label>Date</label><input id="f-date" type="date" value="${escapeHtml(s.date||'')}"></div>
+      <hr class="divider">
+      <div class="field"><label>Number of groups / colours (max 6)</label><input id="f-ngroups" type="number" inputmode="numeric" min="1" max="6" value="${escapeHtml(s.numGroups!=null?s.numGroups:6)}"></div>
+      <div class="field"><label>Members per group</label><input id="f-mpg" type="number" inputmode="numeric" min="1" value="${escapeHtml(s.membersPerGroup!=null?s.membersPerGroup:4)}"></div>
+      <p class="qhint">Participant IDs are <b>L_MM</b> (colour letter _ member): Red=R, Orange=O, Yellow=Y, Green=G, Blue=B, Purple=P. With 6 groups \u00d7 4 members, valid IDs run R_01 \u2026 P_04.</p>
+      <div class="field"><label>Chief\u2019s name (shown on sticker, no number)</label><input id="f-chief" value="${escapeHtml(s.chiefName||'')}"></div>
+      <div class="opt single ${ (s.chiefAllowed!==false) ?'selected':'' }" id="f-chiefallow">
+        <span class="mark">${ (s.chiefAllowed!==false) ?'\u2713':''}</span>
+        <span>Allow listing the Chief (write CHIEF) in network questions (Q8\u2013Q15)</span>
+      </div>
+      <p class="qhint">The Chief has no number. To record a relationship with the Chief in Q8\u2013Q15, the facilitator writes the word CHIEF. This is ON by default; turn off to reject CHIEF as a network contact.</p>
+      <button class="btn primary" id="f-save">Save & Continue</button>
+      ${STATE.setup?'<button class="btn outline" id="f-cancel">Cancel</button>':''}
+    </div>
+  `;
+  if(!s.date){ document.getElementById('f-date').value=new Date().toISOString().substring(0,10); }
+  let chiefAllowed = s.chiefAllowed!==false;
+  const ca=document.getElementById('f-chiefallow');
+  const chiefInput=document.getElementById('f-chief');
+  function paintAllow(){ ca.classList.toggle('selected',chiefAllowed); ca.querySelector('.mark').textContent=chiefAllowed?'\u2713':''; }
+  function syncDisable(){
+    const has=!!chiefInput.value.trim();
+    ca.classList.toggle('opt-disabled',!has);
+    if(!has){ chiefAllowed=false; paintAllow(); }
+  }
+  // if no chief name yet, the toggle starts off & disabled
+  if(!chiefInput.value.trim()){ chiefAllowed=false; }
+  paintAllow(); syncDisable();
+  chiefInput.oninput=()=>{
+    const has=!!chiefInput.value.trim();
+    if(has && !chiefAllowed){ chiefAllowed=true; }   // entering a name turns listing ON by default
+    if(!has){ chiefAllowed=false; }
+    paintAllow(); syncDisable();
+  };
+  ca.onclick=()=>{
+    if(!chiefInput.value.trim()){ showToast('Enter the Chief\u2019s name first'); chiefInput.focus(); return; }
+    chiefAllowed=!chiefAllowed; paintAllow();
+  };
+  document.getElementById('f-save').onclick=()=>{
+    const name=document.getElementById('f-name').value.trim();
+    const vname=document.getElementById('f-vname').value.trim();
+    const vnum=document.getElementById('f-vnum').value.trim();
+    const run=document.getElementById('f-run').value.trim();
+    const vtype=document.getElementById('f-vtype').value;
+    const ward=document.getElementById('f-ward').value.trim();
+    const date=document.getElementById('f-date').value;
+    const ng=Number(document.getElementById('f-ngroups').value.trim());
+    const mpg=Number(document.getElementById('f-mpg').value.trim());
+    const chief=document.getElementById('f-chief').value.trim();
+    if(!name||!vname||!vnum){ showToast('Please fill in facilitator, village name and number'); return; }
+    if(!vtype){ showToast('Please select Village Type'); return; }
+    if(!(Number(run)>=1) || !Number.isInteger(Number(run))){ showToast('Run must be a whole number \u2265 1'); return; }
+    if(!(ng>=1&&ng<=6)){ showToast('Number of groups must be 1\u20136'); return; }
+    if(!(mpg>=1)){ showToast('Members per group must be at least 1'); return; }
+    STATE.setup={
+      facilitatorName:name, villageName:vname, villageNumber:vnum, villageType:vtype,
+      wardTC:ward, date:date, run:Number(run), numGroups:ng, membersPerGroup:mpg,
+      chiefName: chief, chiefAllowed:chiefAllowed,
+      roster: (STATE.setup&&STATE.setup.roster)||[]
+    };
+    saveState(); go('home');
+  };
+  const cancel=document.getElementById('f-cancel'); if(cancel) cancel.onclick=()=>go('home');
+}
+/* ---------- HOME ---------- */
+function renderHome(app){
+  const s=STATE.setup;
+  const surveys=STATE.surveys||[];
+  let list='';
+  if(surveys.length===0){ list='<p class="muted" style="text-align:center;margin:24px 0;">No surveys collected yet.</p>'; }
+  else {
+    surveys.slice().sort((a,b)=>idOrder(a.id)-idOrder(b.id)).forEach(sv=>{
+      const idx=STATE.surveys.indexOf(sv);
+      list+=`<div class="list-card" data-view="${idx}">
+        <div class="lc-main"><div class="lc-id">ID ${escapeHtml(sv.id)}</div>
+        <div class="lc-sub">saved ${escapeHtml((sv.savedAt||'').replace('T',' ').substring(0,16))}</div></div>
+        <span class="lc-badge">view</span></div>`;
+    });
+  }
+  const draftBadge = STATE.draft ? `<div class="note"><span class="flag">\u270E In progress:</span> ID ${escapeHtml(STATE.draft.id)} \u2014 tap \u201CResume\u201D to continue.</div>` : '';
+  app.innerHTML=`
+    <div class="header"><span class="title">PGG Survey</span>${IN_SUITE?'<a href="../index.html" style="color:inherit;opacity:0.85;font-size:13px;text-decoration:none;margin-right:8px;">\u21e6 Suite</a>':''}<button class="home-btn" id="set">\u2699</button></div>
+    <div class="content">
+      <div style="text-align:center;opacity:0.85;margin-bottom:6px;">
+        Village ${escapeHtml(String(s.villageNumber).padStart(2,'0'))} \u00b7 Run ${escapeHtml(s.run!=null?s.run:1)} \u00b7 ${escapeHtml(s.villageType)}<br>
+        Facilitator: ${escapeHtml(s.facilitatorName)} \u00b7 ${escapeHtml(numGroups(s))} groups \u00d7 ${escapeHtml(membersPerGroup(s))} (${escapeHtml(makeId(1,1))}\u2013${escapeHtml(makeId(numGroups(s),membersPerGroup(s)))})
+      </div>
+      ${draftBadge}
+      ${ STATE.draft
+          ? '<button class="btn primary" id="resume">Resume survey (ID '+escapeHtml(STATE.draft.id)+')</button>'
+          : '<button class="btn primary" id="new">+ New Survey</button>' }
+      <button class="btn" id="newchief" style="background:rgba(180,140,255,0.28);">👑 + New Chief Survey</button>
+      <hr class="divider">
+      <h3 style="margin-top:0;">Participant Surveys (${surveys.length})</h3>
+      ${list}
+      <h3 style="margin-top:8px;">Chief Surveys (${(STATE.chiefSurveys||[]).length})</h3>
+      ${(STATE.chiefSurveys||[]).length===0
+        ? '<p class="muted" style="text-align:center;font-size:14px;margin:8px 0;">No chief surveys yet.</p>'
+        : (STATE.chiefSurveys||[]).map((cs,i)=>`<div class="list-card"><div class="lc-main"><div class="lc-id">👑 ${escapeHtml(cs.villageName||'Chief Survey')} · Run ${escapeHtml(String(cs.run||1))}</div><div class="lc-sub">saved ${escapeHtml((cs.savedAt||'').replace('T',' ').substring(0,16))}</div></div></div>`).join('')
+      }
+      <div class="spacer"></div>
+      <button class="btn" id="exp">Export to CSV</button>
+      <button class="btn outline" id="roster">Manage roster / valid IDs</button>
+      <button class="btn outline" id="archive">📂 Past Experiments</button>
+      <button class="btn danger" id="reset">\u26A0 Reset All Data</button>
+    </div>
+  `;
+  document.getElementById('set').onclick=()=>go('setup');
+  const nb=document.getElementById('new'); if(nb) nb.onclick=()=>go('idEntry');
+  const rb=document.getElementById('resume'); if(rb) rb.onclick=()=>go('section',{section:STATE.draft.lastSection||1});
+  document.getElementById('newchief').onclick=()=>go('chiefSurvey',{mode:'new'});
+  document.getElementById('exp').onclick=()=>go('exportData');
+  document.getElementById('roster').onclick=()=>go('settings');
+  document.getElementById('archive').onclick=()=>go('pastExperiments');
+  document.getElementById('reset').onclick=()=>{
+    const n=(STATE.surveys||[]).length;
+    const msg = n>0
+      ? 'Reset ALL data on this device? This permanently deletes the session setup, the roster, and all '+n+' collected survey(s).\n\nThe current session will be archived to Past Experiments so you can re-download its CSV later.\n\nExport to CSV first if you want a copy now.\n\nOK to archive & reset.'
+      : 'Reset all data on this device? This clears the session setup and roster, and cannot be undone.';
+    if(confirm(msg)){
+      archiveSurveySession();
+      STATE = makeFreshState();
+      saveState();
+      go('setup');
+      showToast('All data reset');
+    }
+  };
+  app.querySelectorAll('[data-view]').forEach(el=>el.onclick=()=>go('viewSurvey',{index:Number(el.dataset.view)}));
+}
+/* ---------- ROSTER / SETTINGS ---------- */
+function renderSettings(app){
+  const roster=(STATE.setup.roster||[]);
+  const text=roster.map(r=>r.id+(r.name?(','+r.name):'')).join('\n');
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">\u2190</button><span class="title">Roster / Valid IDs</span></div>
+    <div class="content">
+      <p class="muted">Optional. Paste one participant per line as <b>ID,name</b> where ID is the L_MM letter format (name optional). Used to show names next to IDs in the network-mapping questions. Range checks use the group/member settings from Setup.</p>
+      <textarea id="rost" class="txt" style="height:240px;font-family:monospace;font-size:14px;" placeholder="R_01,Nomsa Dlamini&#10;R_02,Sipho Mbeki&#10;R_03">${escapeHtml(text)}</textarea>
+      <button class="btn primary" id="save">Save roster</button>
+      <button class="btn outline" id="clear">Clear roster</button>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('home');
+  document.getElementById('save').onclick=()=>{
+    const lines=document.getElementById('rost').value.split('\n').map(l=>l.trim()).filter(Boolean);
+    const r=[];
+    lines.forEach(l=>{ const [id,...rest]=l.split(','); const p=parsePid(id.trim()); if(p) r.push({id:makeId(p.g,p.m), name:rest.join(',').trim()}); });
+    STATE.setup.roster=r; saveState(); showToast('Saved '+r.length+' roster entries'); go('home');
+  };
+  document.getElementById('clear').onclick=()=>{ STATE.setup.roster=[]; saveState(); showToast('Roster cleared'); render(); };
+}
+/* ---------- ID ENTRY (start a new survey) ---------- */
+function renderIdEntry(app){
+  const s=STATE.setup;
+  const ng=numGroups(s), mpg=membersPerGroup(s);
+  let gOpts='<option value="">— group —</option>';
+  for(let g=1;g<=ng;g++) gOpts+=`<option value="${g}">${COLOUR_LETTERS[g-1]||pad2(g)} — ${GROUP_COLORS[g-1]||('Group '+g)}</option>`;
+  let mOpts='<option value="">— member —</option>';
+  for(let m=1;m<=mpg;m++) mOpts+=`<option value="${m}">${pad2(m)}</option>`;
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">\u2190</button><span class="title">New Survey</span></div>
+    <div class="content center">
+      <h2>Participant ID</h2>
+      <p class="muted">Pick this respondent\u2019s group colour and member number from their chest sticker. The ID (L_MM) is shared by the experiment ID and the household survey ID.</p>
+      <div class="field"><label>Group (colour)</label><select id="sgrp">${gOpts}</select></div>
+      <div class="field"><label>Member number</label><select id="smem">${mOpts}</select></div>
+      <div style="font-size:28px;font-weight:700;margin:6px 0;">ID: <span id="idprev">\u2014</span></div>
+      <div class="qerr" id="err"></div>
+      <button class="btn primary" id="start" style="max-width:280px;">Start survey</button>
+    </div>`;
+  const grp=document.getElementById('sgrp'), mem=document.getElementById('smem'), prev=document.getElementById('idprev');
+  const upd=()=>{ prev.textContent=(grp.value&&mem.value)?makeId(Number(grp.value),Number(mem.value)):'\u2014'; };
+  grp.onchange=upd; mem.onchange=upd;
+  document.getElementById('back').onclick=()=>go('home');
+  document.getElementById('start').onclick=()=>{
+    const err=document.getElementById('err');
+    if(!grp.value||!mem.value){ err.textContent='Select both group and member.'; return; }
+    const id=makeId(Number(grp.value),Number(mem.value));
+    if((STATE.surveys||[]).some(s=>String(s.id)===id)){ err.textContent='A survey for ID '+id+' already exists. Open it from Home to edit.'; return; }
+    const ans=blankAnswers(); ans.Q7=id;
+    STATE.draft={ id:id, answers:ans, lastSection:1 };
+    STATE.editIndex=null;
+    saveState(); go('section',{section:1});
+  };
+}
+/* =============================================================================
+   SECTION SCREEN
+============================================================================= */
+function renderSection(app){
+  const secNum=routeArgs.section||1;
+  const sec=SECTIONS.find(s=>s.n===secNum);
+  const ans=draftAnswers();
+  if(!ans){ go('home'); return; }
+  STATE.draft.lastSection=secNum; saveState();
+  let body='';
+  if(sec.note) body+=`<div class="note"><span class="flag">\u2691 Facilitator:</span> ${escapeHtml(sec.note)}</div>`;
+  if(sec.instruction) body+=`<div class="note">${escapeHtml(sec.instruction)}</div>`;
+  if(sec.story) body+=`<div class="story">${escapeHtml(sec.story)}</div>`;
+  sec.ids.forEach(id=>{ body+=renderQuestion(id, ans); });
+  const pct=Math.round(secNum/SECTIONS.length*100);
+  app.innerHTML=`
+    <div class="header">
+      <button class="home-btn" id="home">\u2302</button>
+      <span class="title">${secNum}. ${escapeHtml(sec.title)}<div class="step">ID ${escapeHtml(STATE.draft.id)} \u00b7 Section ${secNum} of ${SECTIONS.length}</div></span>
+    </div>
+    <div class="progress"><div style="width:${pct}%"></div></div>
+    <div class="content" id="qbody">${body}
+      <div class="sticky-foot">
+        <div class="btn-row">
+          <button class="btn outline" id="prev">${secNum===1?'\u2302 Home':'\u2190 Back'}</button>
+          <button class="btn primary" id="next">${secNum===SECTIONS.length?'Review \u2192':'Next \u2192'}</button>
+        </div>
+      </div>
+    </div>`;
+  wireQuestions(sec, ans);
+  document.getElementById('home').onclick=()=>{ saveState(); go('home'); };
+  document.getElementById('prev').onclick=()=>{ saveState(); if(secNum===1) go('home'); else go('section',{section:secNum-1}); };
+  document.getElementById('next').onclick=()=>{
+    saveState();
+    const hard=showSectionIssues(secNum);
+    const missing=missingRequired(secNum, ans);
+    missing.forEach(id=>{
+      const card=document.getElementById('card-'+id);
+      const err=document.getElementById('err-'+id);
+      if(card) card.classList.add('invalid');
+      if(err && !err.textContent) err.textContent='\u26A0 Please answer this question.';
+    });
+    if(hard.length || missing.length){
+      showToast('Please answer every question on this page first');
+      const firstId = missing.length ? missing[0] : hard[0].q;
+      const first=document.getElementById('card-'+firstId);
+      if(first) first.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
+    if(secNum===SECTIONS.length) go('review'); else go('section',{section:secNum+1});
+  };
+}
+/* Validate the whole draft but surface only the CURRENT section's HARD errors
+   inline (red card + message). Returns the array of hard issues for this section. */
+function showSectionIssues(secNum){
+  const ans=draftAnswers(); if(!ans) return [];
+  const r=validateSurvey(ans, STATE.setup);
+  document.querySelectorAll('.qcard.invalid').forEach(c=>c.classList.remove('invalid'));
+  document.querySelectorAll('.qerr').forEach(e=>{ if(e.id&&e.id.indexOf('err-')===0) e.textContent=''; });
+  const hard=r.hard.filter(i=>i.sec===secNum);
+  hard.forEach(i=>{
+    const card=document.getElementById('card-'+i.q);
+    const err=document.getElementById('err-'+i.q);
+    if(card) card.classList.add('invalid');
+    if(err) err.textContent='\u26A0 '+i.msg;
+  });
+  return hard;
+}
+/* ---------- render one question ---------- */
+function renderQuestion(id, ans){
+  const def=Q[id]; const a=ans[id];
+  let inner='';
+  const choice = (a&&typeof a==='object')?a.choice:a;
+  if(def.groupHeader) inner+=`<div class="subhead">${escapeHtml(def.groupHeader)}</div>`;
+  inner+=`<div class="qcard" id="card-${id}">`;
+  inner+=`<span class="qnum">${id}</span>`;
+  if(def.t==='statement5'){
+    inner+=`<div class="qtext"><b>Statement 1:</b> ${escapeHtml(def.s1)}</div>`;
+  } else {
+    inner+=`<div class="qtext">${escapeHtml(def.text)}${def.optional?' <span class="muted">(optional)</span>':''}</div>`;
+  }
+  switch(def.t){
+    case 'freq': case 'single': case 'statement5': case 'prizeAB': {
+      inner+='<div class="opts">';
+      def.opts.forEach(o=>{
+        const sel = choice===o;
+        inner+=`<div class="opt single ${sel?'selected':''}" data-q="${id}" data-val="${escapeHtml(o)}"><span class="mark">${sel?'\u25CF':''}</span><span>${escapeHtml(o)}</span></div>`;
+      });
+      inner+='</div>';
+      if(def.t==='statement5') inner+=`<div class="qtext" style="margin-top:8px;"><b>Statement 2:</b> ${escapeHtml(def.s2)}</div>`;
+      if(def.other && choice==='Other') inner+=`<div class="field"><input class="txt" data-q="${id}" data-other="1" placeholder="Please specify" value="${escapeHtml(a.other||'')}"></div>`;
+      break;
+    }
+    case 'multi': {
+      inner+='<div class="opts">';
+      (def.opts).forEach(o=>{
+        const sel=(a||[]).includes(o);
+        inner+=`<div class="opt multi ${sel?'selected':''}" data-q="${id}" data-val="${escapeHtml(o)}"><span class="mark">${sel?'\u2713':''}</span><span>${escapeHtml(o)}</span></div>`;
+      });
+      inner+='</div>';
+      if(def.other && (a||[]).includes('Other')){
+        inner+=`<div class="field"><input class="txt" data-q="${id}" data-multiother="1" placeholder="Please specify" value="${escapeHtml(ans[id+'__o']||'')}"></div>`;
+      }
+      break;
+    }
+    case 'idself': {
+      inner+=`<div class="field"><input class="num" value="${escapeHtml(ans.Q7||'')}" disabled></div><div class="qhint">Auto-filled from the participant ID (kept identical by design).</div>`;
+      break;
+    }
+    case 'idlist': {
+      const setup=STATE.setup||{};
+      const selfId = ans.Q7 ? String(ans.Q7).trim() : '';
+      const p = parseIdList(a);
+      const ng=numGroups(setup), mpg=membersPerGroup(setup);
+      const roster=setup.roster||[];
+      const nameOf = cid => { const r=roster.find(x=>String(x.id).trim()===cid); return (r&&r.name)?r.name:''; };
+      let chips=`<span class="chip na ${p.na?'on':''}" data-q="${id}" data-chip="NA">N/A (none)</span>`;
+      if(setup.chiefAllowed!==false && (setup.chiefName||'').trim()){
+        chips+=`<span class="chip chief ${p.chief?'on':''}" data-q="${id}" data-chip="CHIEF">CHIEF${setup.chiefName?(' \u00b7 '+escapeHtml(setup.chiefName)):''}</span>`;
+      }
+      for(let g=1; g<=ng; g++) for(let m=1; m<=mpg; m++){
+        const cid=makeId(g,m); if(cid===selfId) continue;
+        const on=p.ids.includes(cid); const nm=nameOf(cid);
+        chips+=`<span class="chip ${on?'on':''}" data-q="${id}" data-chip="${cid}">${cid}${nm?'<span class="chip-name">'+escapeHtml(nm)+'</span>':''}</span>`;
+      }
+      inner+=`<div class="qhint">Tap every participant who applies. Tap again to remove. \u201CN/A\u201D = no one.</div>`;
+      inner+=`<div class="chips">${chips}</div>`;
+      break;
+    }
+    case 'number': {
+      inner+=`<div class="field" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <input class="num" data-q="${id}" data-num="1" type="text" inputmode="numeric" ${def.intOnly?'pattern="[0-9]*"':''} value="${escapeHtml(a||'')}" style="max-width:140px;">
+        <span class="muted">${escapeHtml(def.unit||'')}</span>
+      </div>
+      <div class="qwarn" id="warn-${id}"></div>`;
+      break;
+    }
+    case 'text': {
+      inner+=`<div class="field" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <input class="txt" data-q="${id}" placeholder="${escapeHtml(def.placeholder||'')}" value="${escapeHtml(a||'')}" style="flex:1;min-width:160px;">
+      </div>`;
+      break;
+    }
+    case 'yesno': {
+      ['Yes','No'].forEach(o=>{ const sel=a===o; inner+=`<span class="yn ${sel?'on':''}" data-q="${id}" data-val="${o}" style="display:inline-block;margin:6px 8px 0 0;cursor:pointer;padding:9px 22px;border:1.5px solid rgba(255,255,255,0.4);border-radius:10px;${sel?'background:#fff;color:#13343b;font-weight:700;':''}">${o}</span>`; });
+      break;
+    }
+    case 'services': {
+      inner+='<div class="opts">';
+      SVC_ROWS.forEach(r=>{
+        const v=a[r.key]||'';
+        inner+=`<div class="svc-row"><span class="svc-label">${escapeHtml(r.label)}</span><span class="svc-btns">
+          <span class="yn ${v==='Yes'?'on':''}" data-q="${id}" data-row="${r.key}" data-val="Yes">Yes</span>
+          <span class="yn ${v==='No'?'on':''}" data-q="${id}" data-row="${r.key}" data-val="No">No</span></span></div>`;
+      });
+      inner+='</div>';
+      break;
+    }
+    case 'amount500': {
+      const priv = (ans.Q33&&ans.Q33.choice)==='Communicated privately';
+      if(!priv){
+        inner+=`<div class="qhint">Q33 is not \u201CCommunicated privately\u201D, so this is automatically <b>N/A</b>.</div>`;
+      } else {
+        inner+=`<div class="field" style="display:flex;align-items:center;gap:10px;"><input class="num" data-q="${id}" data-amount="1" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="1\u20131000" value="${escapeHtml(a.na?'':(a.amount||''))}" style="max-width:140px;"><span class="muted">ZAR</span></div>`;
+        const sel=a.na;
+        inner+=`<div class="opt single ${sel?'selected':''}" data-q="${id}" data-na="1"><span class="mark">${sel?'\u25CF':''}</span><span>Not applicable (declines to pay)</span></div>`;
+        inner+=`<div class="qhint">Type an amount, or tap \u201CNot applicable\u201D. Tapping it again (or typing) re-enables the amount.</div>`;
+      }
+      break;
+    }
+    case 'prizeAB': {
+      // handled by single-branch above? No — keep here for the conditional gate.
+      const amt=ans.Q34&&!ans.Q34.na&&isNum(ans.Q34.amount)&&String(ans.Q34.amount).trim()!=='';
+      if(!amt){
+        inner+=`<div class="qhint">Answer only after a willingness-to-pay amount is stated in Q34.</div>`;
+      } else {
+        inner+='<div class="opts">';
+        def.opts.forEach(o=>{ const sel=choice===o; inner+=`<div class="opt single ${sel?'selected':''}" data-q="${id}" data-val="${escapeHtml(o)}"><span class="mark">${sel?'\u25CF':''}</span><span>${escapeHtml(o)}</span></div>`; });
+        inner+='</div>';
+      }
+      break;
+    }
+    case 'landuse': {
+      inner+='<div style="margin:4px 0 8px;">';
+      ['Yes','No'].forEach(o=>{ const sel=a.own===o; inner+=`<span class="yn ${sel?'on':''}" data-q="${id}" data-own="${o}" style="display:inline-block;margin:0 8px 0 0;cursor:pointer;padding:9px 22px;border:1.5px solid rgba(255,255,255,0.4);border-radius:10px;${sel?'background:#fff;color:#13343b;font-weight:700;':''}">${o}</span>`; });
+      inner+='</div>';
+      if(a.own==='Yes'){
+        inner+='<div class="qhint">How was land access obtained?</div><div class="opts">';
+        LANDUSE_METHODS.forEach(m=>{ const sel=(a.methods||[]).includes(m); inner+=`<div class="opt multi ${sel?'selected':''}" data-q="${id}" data-method="${escapeHtml(m)}"><span class="mark">${sel?'\u2713':''}</span><span>${escapeHtml(m)}</span></div>`; });
+        inner+='</div>';
+        if((a.methods||[]).includes('Other')) inner+=`<div class="field"><input class="txt" data-q="${id}" data-luother="1" placeholder="Please specify" value="${escapeHtml(a.other||'')}"></div>`;
+      } else if(a.own==='No'){
+        inner+=`<div class="qhint">No land access \u2014 method options are not applicable.</div>`;
+      }
+      break;
+    }
+    case 'livedout': {
+      inner+='<div style="margin:4px 0 8px;">';
+      ['Yes','No'].forEach(o=>{ const sel=a.lived===o; inner+=`<span class="yn ${sel?'on':''}" data-q="${id}" data-lived="${o}" style="display:inline-block;margin:0 8px 0 0;cursor:pointer;padding:9px 22px;border:1.5px solid rgba(255,255,255,0.4);border-radius:10px;${sel?'background:#fff;color:#13343b;font-weight:700;':''}">${o}</span>`; });
+      inner+='</div>';
+      if(a.lived==='Yes'){
+        inner+=`<div class="field"><label>Where?</label><input class="txt" data-q="${id}" data-where="1" value="${escapeHtml(a.where||'')}"></div>`;
+        inner+=`<div class="field"><label>Duration</label><input class="txt" data-q="${id}" data-duration="1" value="${escapeHtml(a.duration||'')}"></div>`;
+      } else if(a.lived==='No'){
+        inner+=`<div class="qhint">Where / Duration not applicable.</div>`;
+      }
+      break;
+    }
+  }
+  inner+=`<div class="qerr" id="err-${id}"></div>`;
+  inner+=`</div>`;
+  return inner;
+}
+/* ---------- wire events for a section (delegation) ---------- */
+function wireQuestions(sec, ans){
+  const body=document.getElementById('qbody');
+  // these triggers change conditional visibility => re-render the section
+  const VISIBILITY_TRIGGERS = ['Q33','Q56'];
+  body.querySelectorAll('.opt, .yn').forEach(el=>{
+    el.onclick=()=>{
+      const id=el.dataset.q; if(!id) return;
+      const def=Q[id]; const a=ans[id];
+      // amount500 "Not applicable"
+      if(el.dataset.na){ a.na=!a.na; if(a.na) a.amount=''; saveState(); rerenderSection(sec,ans); return; }
+      // services grid
+      if(el.dataset.row){ a[el.dataset.row]=el.dataset.val; saveState(); rerenderSection(sec,ans); return; }
+      // land-use own
+      if(el.dataset.own!==undefined && el.dataset.own!==''){ a.own=el.dataset.own; if(a.own!=='Yes'){a.methods=[];a.other='';} saveState(); rerenderSection(sec,ans); return; }
+      // land-use method multi
+      if(el.dataset.method){ const m=el.dataset.method; const i=a.methods.indexOf(m); if(i>=0)a.methods.splice(i,1); else a.methods.push(m); if(m==='Other'&&i>=0)a.other=''; saveState(); rerenderSection(sec,ans); return; }
+      // lived-out yes/no
+      if(el.dataset.lived!==undefined && el.dataset.lived!==''){ a.lived=el.dataset.lived; if(a.lived!=='Yes'){a.where='';a.duration='';} saveState(); rerenderSection(sec,ans); return; }
+      // simple yes/no (Q53)
+      if(def.t==='yesno' && el.dataset.val){ ans[id]=el.dataset.val; saveState(); rerenderSection(sec,ans); return; }
+      // multi-select (Q5)
+      if(def.t==='multi'){
+        const o=el.dataset.val; const arr=ans[id]; const idx=arr.indexOf(o);
+        if(idx>=0){ arr.splice(idx,1); }
+        else {
+          const excl=def.exclusive||[];
+          if(excl.includes(o)){ ans[id]=[o]; }                 // exclusive clears others
+          else { def.exclusive&&def.exclusive.forEach(e=>{ const j=arr.indexOf(e); if(j>=0)arr.splice(j,1); }); arr.push(o); }
+        }
+        saveState();
+        // toggle classes in place (no visibility change)
+        body.querySelectorAll(`.opt[data-q="${id}"]`).forEach(o2=>{
+          const on=(ans[id]||[]).includes(o2.dataset.val);
+          o2.classList.toggle('selected',on); o2.querySelector('.mark').textContent=on?'\u2713':'';
+        });
+        return;
+      }
+      // single-select family
+      if(['freq','single','statement5','prizeAB'].includes(def.t)){
+        const o=el.dataset.val;
+        const obj=(typeof a==='object')?a:(ans[id]={choice:'',other:''});
+        obj.choice = (obj.choice===o)?'':o;       // tap again to clear
+        if(def.other && obj.choice!=='Other') obj.other='';
+        saveState();
+        if(VISIBILITY_TRIGGERS.includes(id) || def.other){ rerenderSection(sec,ans); }
+        else {
+          body.querySelectorAll(`.opt[data-q="${id}"]`).forEach(o2=>{
+            const on=obj.choice===o2.dataset.val;
+            o2.classList.toggle('selected',on); o2.querySelector('.mark').textContent=on?'\u25CF':'';
+          });
+        }
+        return;
+      }
+    };
+  });
+  // ----- idlist tap-chips (Q8–Q15): build the stored string from taps -----
+  body.querySelectorAll('.chip[data-chip]').forEach(el=>{
+    el.onclick=()=>{
+      const id=el.dataset.q, chip=el.dataset.chip;
+      const cur=parseIdList(ans[id]);
+      if(chip==='NA'){
+        ans[id] = cur.na ? '' : 'N/A';
+      } else if(chip==='CHIEF'){
+        ans[id] = buildIdList(cur.ids, !cur.chief);
+      } else {
+        const arr=cur.ids.slice(); const i=arr.indexOf(chip);
+        if(i>=0) arr.splice(i,1); else arr.push(chip);
+        ans[id] = buildIdList(arr, cur.chief);
+      }
+      saveState();
+      const np=parseIdList(ans[id]);
+      body.querySelectorAll(`.chip[data-q="${id}"][data-chip]`).forEach(c=>{
+        const ch=c.dataset.chip;
+        const on = ch==='NA' ? np.na : (ch==='CHIEF' ? np.chief : np.ids.includes(ch));
+        c.classList.toggle('on',on);
+      });
+      const card=document.getElementById('card-'+id); if(card) card.classList.remove('invalid');
+      const err=document.getElementById('err-'+id); if(err) err.textContent='';
+    };
+  });
+  // text / number inputs (no section re-render, so focus is kept while typing)
+  body.querySelectorAll('input[data-q]').forEach(el=>{
+    const id=el.dataset.q; const def=Q[id]; const a=ans[id];
+    el.oninput=()=>{
+      if(el.dataset.amount){
+        let v=el.value.replace(/[^0-9]/g,''); if(v!==el.value) el.value=v;
+        a.amount=v; if(v!=='') a.na=false;
+        const na=body.querySelector(`.opt[data-q="${id}"][data-na]`);
+        if(na && !a.na){ na.classList.remove('selected'); const mk=na.querySelector('.mark'); if(mk) mk.textContent=''; }
+        saveState(); return;
+      }
+      if(el.dataset.num){
+        let v = def.intOnly ? el.value.replace(/[^0-9]/g,'') : el.value.replace(/[^0-9.]/g,'');
+        if(v!==el.value) el.value=v;
+        ans[id]=v; saveState(); updateNumWarn(id, ans); return;
+      }
+      if(el.dataset.other){ a.other=el.value; }
+      else if(el.dataset.multiother){ ans[id+'__o']=el.value; }
+      else if(el.dataset.luother){ a.other=el.value; }
+      else if(el.dataset.where){ a.where=el.value; }
+      else if(el.dataset.duration){ a.duration=el.value; }
+      else { ans[id]=el.value; }
+      saveState();
+    };
+  });
+}
+/* build a network-list string from selected IDs + chief flag */
+function buildIdList(ids, chief){
+  const parts=ids.slice(); if(chief) parts.push('CHIEF');
+  return parts.join(' ');
+}
+/* inline out-of-range / eligibility warning for number fields */
+function updateNumWarn(id, ans){
+  const def=Q[id]; const el=document.getElementById('warn-'+id); if(!el) return;
+  const v=ans[id]; el.textContent='';
+  if(v===''||v==null) return;
+  if(!isNum(v)){ el.textContent='\u26A0 Not a number.'; return; }
+  const n=Number(v);
+  if(def.min!=null && n<def.min){ el.textContent='\u26A0 Below the expected minimum ('+def.min+').'; return; }
+  if(def.max!=null && n>def.max){ el.textContent='\u26A0 Above the expected maximum ('+def.max+') \u2014 please confirm.'; return; }
+  if(id==='Q38' && n<18){ el.textContent='\u26A0 Under 18 \u2014 confirm this participant is eligible to consent.'; }
+}
+/* re-render whole section while preserving scroll (used after a structural change) */
+function rerenderSection(sec, ans){
+  const y=window.scrollY;
+  renderSection(document.getElementById('app'));
+  window.scrollTo(0,y);
+}
+/* =============================================================================
+   REVIEW
+============================================================================= */
+function renderReview(app){
+  const ans=draftAnswers(); if(!ans){ go('home'); return; }
+  const {hard,soft}=validateSurvey(ans, STATE.setup);
+  let body='';
+  if(hard.length===0 && soft.length===0){
+    body+='<div class="note">All checks passed. Ready to save.</div>';
+  }
+  if(hard.length){
+    body+='<h3>Must fix ('+hard.length+')</h3>';
+    hard.forEach(it=>{ body+=`<div class="issue hard" data-sec="${it.sec||''}"><span class="itag">${escapeHtml(it.q)}</span>${escapeHtml(it.msg)}</div>`; });
+  }
+  if(soft.length){
+    body+='<h3>Please confirm ('+soft.length+')</h3>';
+    soft.forEach(it=>{ body+=`<div class="issue soft" data-sec="${it.sec||''}"><span class="itag">${escapeHtml(it.q)}</span>${escapeHtml(it.msg)}</div>`; });
+  }
+  const canSaveBase = hard.length===0;
+  const ackNeeded = soft.length>0;
+  const s=STATE.setup;
+  const ng=numGroups(s), mpg=membersPerGroup(s);
+  const cur=parsePid(STATE.draft.id)||{g:'',m:''};
+  let gOpts='', mOpts='';
+  for(let g=1;g<=ng;g++) gOpts+=`<option value="${g}" ${cur.g===g?'selected':''}>${COLOUR_LETTERS[g-1]||pad2(g)} \u2014 ${GROUP_COLORS[g-1]||('Group '+g)}</option>`;
+  for(let m=1;m<=mpg;m++) mOpts+=`<option value="${m}" ${cur.m===m?'selected':''}>${pad2(m)}</option>`;
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">\u2190</button><span class="title">Review \u2014 ID ${escapeHtml(STATE.draft.id)}</span></div>
+    <div class="content">
+      ${body}
+      <div class="qcard"><div class="qtext"><b>Participant ID</b> \u2014 correct it here if it was entered wrong (no need to delete the survey).</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <select id="eid-g" style="max-width:150px;">${gOpts}</select>
+          <select id="eid-m" style="max-width:90px;">${mOpts}</select>
+          <button class="btn" id="eid-save" style="width:auto;margin:0;padding:11px 16px;font-size:15px;">Update ID</button>
+        </div>
+        <div class="qerr" id="eid-err"></div>
+      </div>
+      ${ ackNeeded ? `<div class="ack-row"><input type="checkbox" id="ack"><label for="ack">I have reviewed the soft flags above with the participant and confirm the answers are correct.</label></div>`:'' }
+      <div class="field"><label>Session completed by (name)</label><input class="txt" id="cby" value="${escapeHtml((STATE.draft.completedBy)||STATE.setup.facilitatorName||'')}"></div>
+      <button class="btn primary" id="save" ${canSaveBase?'':'disabled'}>Save survey</button>
+      <button class="btn outline" id="edit">\u2190 Back to questions</button>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('section',{section:SECTIONS.length});
+  document.getElementById('edit').onclick=()=>go('section',{section:SECTIONS.length});
+  app.querySelectorAll('.issue[data-sec]').forEach(el=>{ const sn=el.dataset.sec; if(sn) el.onclick=()=>go('section',{section:Number(sn)}); });
+  document.getElementById('eid-save').onclick=()=>{
+    const eerr=document.getElementById('eid-err');
+    const g=Number(document.getElementById('eid-g').value), m=Number(document.getElementById('eid-m').value);
+    if(!validPid(g,m,STATE.setup)){ eerr.textContent='Pick a valid group and member.'; return; }
+    const newId=makeId(g,m);
+    if(newId===STATE.draft.id){ eerr.textContent='That is already the current ID.'; return; }
+    const clash=(STATE.surveys||[]).some((sv,i)=>String(sv.id)===newId && i!==STATE.editIndex);
+    if(clash){ eerr.textContent='A survey for ID '+newId+' already exists. Pick a different ID.'; return; }
+    STATE.draft.id=newId; STATE.draft.answers.Q7=newId; saveState();
+    showToast('ID changed to '+newId); go('review');
+  };
+  const saveBtn=document.getElementById('save');
+  const ack=document.getElementById('ack');
+  function refresh(){ saveBtn.disabled = !canSaveBase || (ackNeeded && !ack.checked); }
+  if(ack) ack.onchange=refresh;
+  refresh();
+  saveBtn.onclick=()=>{
+    if(saveBtn.disabled) return;
+    const completedBy=document.getElementById('cby').value.trim();
+    const prev=(STATE.editIndex!=null)?STATE.surveys[STATE.editIndex]:null;
+    const rec={ id:STATE.draft.id, answers:ans, completedBy, savedAt:new Date().toISOString(),
+                run:(prev&&prev.run!=null)?prev.run:STATE.setup.run,
+                village:(prev&&prev.village!=null)?prev.village:STATE.setup.villageNumber };
+    if(STATE.editIndex!=null){ STATE.surveys[STATE.editIndex]=rec; }
+    else { STATE.surveys.push(rec); }
+    STATE.draft=null; STATE.editIndex=null; saveState();
+    showToast('Survey saved'); go('home');
+  };
+}
+/* =============================================================================
+   VIEW / EDIT / DELETE a saved survey
+============================================================================= */
+function renderViewSurvey(app){
+  const sv=STATE.surveys[routeArgs.index];
+  if(!sv){ go('home'); return; }
+  const ans=sv.answers;
+  let rows='';
+  ALL_IDS.forEach(id=>{ rows+=`<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.12);"><b>${id}</b> \u00b7 ${escapeHtml(answerSummary(id,ans))}</div>`; });
+  const {hard,soft}=validateSurvey(ans, STATE.setup);
+  const status = hard.length? `<div class="note" style="border-color:#ff9999;">${hard.length} hard issue(s) remain.</div>` : (soft.length?`<div class="note">${soft.length} soft flag(s).</div>`:'<div class="note">All checks passed.</div>');
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">\u2190</button><span class="title">ID ${escapeHtml(sv.id)}</span></div>
+    <div class="content">
+      ${status}
+      <div class="btn-row"><button class="btn primary" id="edit">Edit</button><button class="btn danger" id="del">Delete</button></div>
+      <div style="font-size:14px;margin-top:8px;">${rows}</div>
+      <button class="btn outline" id="back2">\u2190 Home</button>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('home');
+  document.getElementById('back2').onclick=()=>go('home');
+  document.getElementById('edit').onclick=()=>{
+    STATE.draft={ id:sv.id, answers:JSON.parse(JSON.stringify(sv.answers)), lastSection:1, completedBy:sv.completedBy };
+    STATE.editIndex=routeArgs.index; saveState(); go('section',{section:1});
+  };
+  document.getElementById('del').onclick=()=>{
+    if(confirm('Delete the survey for ID '+sv.id+'? This cannot be undone.')){
+      STATE.surveys.splice(routeArgs.index,1); saveState(); showToast('Deleted'); go('home');
+    }
+  };
+}
+function answerSummary(id,ans){
+  const def=Q[id]; const a=ans[id];
+  switch(def.t){
+    case 'multi': { const base=(a&&a.length)?a.join('; '):'\u2014'; const o=ans[id+'__o']; return (def.other&&a&&a.includes('Other')&&o)?(base+' ('+o+')'):base; }
+    case 'services': return SVC_ROWS.map(r=>r.label.split(' ')[0]+':'+(a[r.key]||'\u2014')).join('  ');
+    case 'amount500': return a.na?'N/A':(a.amount!==''?a.amount+' ZAR':'\u2014');
+    case 'landuse': return a.own?(a.own+(a.own==='Yes'?(' \u2014 '+((a.methods||[]).join('; ')||'no method')+(a.other?(' ('+a.other+')'):'')):'')):'\u2014';
+    case 'livedout': return a.lived?(a.lived+(a.lived==='Yes'?(' \u2014 '+(a.where||'?')+' / '+(a.duration||'?')):'')):'\u2014';
+    case 'idself': return ans.Q7||'\u2014';
+    case 'single': case 'statement5': case 'prizeAB':
+      return (a.choice||'\u2014')+((def.other&&a.choice==='Other'&&a.other)?(': '+a.other):'');
+    default: return (a==='' || a==null)?'\u2014':String(a);
+  }
+}
+/* =============================================================================
+   EXPORT CSV
+============================================================================= */
+function csvCell(v){ if(v==null) return ''; const s=String(v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
+function buildCSV(){
+  const s=STATE.setup;
+  const meta=['village_number','run','village_name','village_type','ward_tc','date','facilitator','completed_by','participant_id','colour_member','saved_at'];
+  const cols=[];
+  ALL_IDS.forEach(id=>{
+    const def=Q[id];
+    if(def.t==='services'){ SVC_ROWS.forEach(r=>cols.push(id+'_'+r.key)); }
+    else if(def.t==='amount500'){ cols.push(id+'_amount'); cols.push(id+'_na'); }
+    else if(def.t==='landuse'){ cols.push(id+'_own'); cols.push(id+'_methods'); cols.push(id+'_other'); }
+    else if(def.t==='livedout'){ cols.push(id+'_lived'); cols.push(id+'_where'); cols.push(id+'_duration'); }
+    else if(def.t==='multi' && def.other){ cols.push(id); cols.push(id+'_other'); }
+    else if((def.t==='single'||def.t==='statement5'||def.t==='prizeAB')&&def.other){ cols.push(id); cols.push(id+'_other'); }
+    else cols.push(id);
+  });
+  const header=meta.concat(cols).join(',');
+  const lines=[header];
+  (STATE.surveys||[]).slice().sort((a,b)=>idOrder(a.id)-idOrder(b.id)).forEach(sv=>{
+    const a=sv.answers;
+    const vlg=(sv.village!=null)?sv.village:s.villageNumber;
+    const run=(sv.run!=null)?sv.run:s.run;
+    const pidFull=participantIdFull(vlg, run, sv.id);
+    const row=[ vlg, run, s.villageName,s.villageType,s.wardTC,s.date,s.facilitatorName,sv.completedBy,pidFull,sv.id,sv.savedAt ];
+    ALL_IDS.forEach(id=>{
+      const def=Q[id]; const v=a[id];
+      if(def.t==='services'){ SVC_ROWS.forEach(r=>row.push(v[r.key]||'')); }
+      else if(def.t==='amount500'){ row.push(v.na?'':v.amount); row.push(v.na?'1':''); }
+      else if(def.t==='landuse'){ row.push(v.own||''); row.push((v.methods||[]).join('; ')); row.push(v.other||''); }
+      else if(def.t==='livedout'){ row.push(v.lived||''); row.push(v.where||''); row.push(v.duration||''); }
+      else if(def.t==='multi'){ row.push((v||[]).join('; ')); if(def.other) row.push(a[id+'__o']||''); }
+      else if((def.t==='single'||def.t==='statement5'||def.t==='prizeAB')){ row.push(v.choice||''); if(def.other) row.push(v.other||''); }
+      else row.push(v==null?'':v);
+    });
+    lines.push(row.map(csvCell).join(','));
+  });
+  return lines.join('\n');
+}
+
+function buildChiefCSV(){
+  // Get chief surveys, defensively
+  const surveys = (STATE.chiefSurveys || []);
+  if(!surveys.length) return '';
+
+  // Meta columns always present
+  const META = ['village_number','run','village_name','village_type','date','facilitator','saved_at'];
+
+  // All CS question keys in definition order
+  const CS_KEYS = Object.keys(CS);
+
+  // Extra sub-keys produced by gate questions (stored in answers but not in CS keys)
+  const EXTRA = ['B3_yn','B3_project','B4_yn','B4_purpose','B4_org'];
+
+  // Collect all B5_freq_* keys that appear in any survey
+  const freqKeys = [];
+  const freqSeen = new Set();
+  surveys.forEach(sv => {
+    Object.keys(sv.answers || {}).forEach(k => {
+      if(k.startsWith('B5_freq_') && !freqSeen.has(k)){
+        freqSeen.add(k); freqKeys.push(k);
+      }
+    });
+  });
+  freqKeys.sort();
+
+  const allAnsCols = [...CS_KEYS, ...EXTRA, ...freqKeys];
+  const header = [...META, ...allAnsCols];
+
+  function cell(v){
+    if(v == null || v === '') return '';
+    // Arrays (multi-select stored as array) -> semicolon-joined quoted string
+    if(Array.isArray(v)) return '"' + v.join('; ').replace(/"/g, '""') + '"';
+    // H11 object {electricity:'Yes',...} -> "electricity:Yes; ..."
+    if(typeof v === 'object') return '"' + Object.entries(v).map(([k2,v2])=>k2+':'+v2).join('; ').replace(/"/g,'""') + '"';
+    const str = String(v).replace(/"/g, '""');
+    return (str.includes(',') || str.includes('\n') || str.includes('"')) ? '"' + str + '"' : str;
+  }
+
+  const rows = [header.join(',')];
+  surveys.forEach(sv => {
+    const a = sv.answers || {};
+    const metaVals = [sv.village||'', sv.run||1, sv.villageName||'', sv.villageType||'', sv.date||'', sv.facilitator||'', sv.savedAt||''];
+    const ansVals  = allAnsCols.map(k => cell(a[k]));
+    rows.push([...metaVals.map(cell), ...ansVals].join(','));
+  });
+  return rows.join('\n');
+}
+
+function dlBlob(filename, content){
+  const blob = new Blob(['\ufeff' + content], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+}
+
+function renderExport(app){
+  const participantCSV = buildCSV();
+  const chiefCSV       = buildChiefCSV();
+  const nPart  = (STATE.surveys || []).length;
+  const nChief = (STATE.chiefSurveys || []).length;
+  const setup  = STATE.setup || {};
+  const fn     = (tag) => `PGG_${tag}_V${setup.villageNumber||'?'}_run${setup.run||1}_${setup.date||'?'}.csv`;
+
+  app.innerHTML = `
+    <div class="header"><button class="home-btn" id="back">\u2190</button><span class="title">Export CSV</span></div>
+    <div class="content">
+
+      <div style="background:rgba(255,255,255,0.07);border-radius:14px;padding:14px;margin-bottom:12px;">
+        <p style="font-weight:700;font-size:16px;margin:0 0 8px;">📋 Participant Surveys (${nPart})</p>
+        <button class="btn primary" id="dl-part" ${nPart===0?'disabled':''}>⬇ Download ${fn('Survey')}</button>
+        <button class="btn" id="copy-part" style="margin-top:6px;">⧉ Copy to clipboard</button>
+        ${nPart===0?'<p class="muted" style="font-size:13px;margin-top:6px;">No participant surveys collected yet.</p>':''}
+      </div>
+
+      <div style="background:rgba(180,140,255,0.12);border-radius:14px;padding:14px;margin-bottom:12px;">
+        <p style="font-weight:700;font-size:16px;margin:0 0 8px;">👑 Chief Surveys (${nChief})</p>
+        <button class="btn primary" id="dl-chief" style="background:rgba(160,100,255,0.4);" ${nChief===0?'disabled':''}>⬇ Download ${fn('Chief')}</button>
+        ${nChief===0?'<p class="muted" style="font-size:13px;margin-top:6px;">No chief surveys saved yet — complete a Chief Survey first.</p>':''}
+      </div>
+
+      <details style="margin-top:8px;">
+        <summary style="cursor:pointer;font-size:13px;opacity:0.7;">Preview participant CSV</summary>
+        <div style="margin-top:8px;max-height:40vh;overflow:auto;background:rgba(0,0,0,0.3);padding:8px;border-radius:8px;font-family:monospace;font-size:11px;white-space:pre;">${escapeHtml(participantCSV.substring(0,3000)+(participantCSV.length>3000?'\n…':''))}</div>
+      </details>
+
+    </div>`;
+
+  document.getElementById('back').onclick = () => go('home');
+
+  const dlPart = document.getElementById('dl-part');
+  dlPart.onclick = () => dlBlob(fn('Survey'), participantCSV);
+
+  document.getElementById('copy-part').onclick = async () => {
+    try { await navigator.clipboard.writeText(participantCSV); showToast('Copied'); }
+    catch(e) { showToast('Clipboard unavailable — use Download'); }
+  };
+
+  const dlChief = document.getElementById('dl-chief');
+  dlChief.onclick = () => {
+    if(!nChief){ showToast('No chief surveys to export.'); return; }
+    dlBlob(fn('Chief'), chiefCSV);
+  };
+}
+
+
+/* =============================================================================
+   PAST EXPERIMENTS ARCHIVE
+============================================================================= */
+const SURVEY_ARCHIVE_KEY='pgg_survey_archive_v1';
+function loadSurveyArchive(){ try{ const s=localStorage.getItem(SURVEY_ARCHIVE_KEY); return s?JSON.parse(s):[]; }catch(e){ return []; } }
+function saveSurveyArchive(arr){ try{ localStorage.setItem(SURVEY_ARCHIVE_KEY,JSON.stringify(arr)); }catch(e){} }
+function archiveSurveySession(){
+  if(!STATE.setup||(STATE.surveys||[]).length===0) return;
+  const archive=loadSurveyArchive();
+  const s=STATE.setup;
+  const vnum=String(s.villageNumber||'').padStart(2,'0');
+  const label=`Survey_V${vnum}_Run${s.run||1}_${s.date||''}`;
+  let csv=''; try{ const tmp=buildCSV(); csv=tmp; }catch(e){ csv=''; }
+  archive.push({label, date:new Date().toISOString(), csv, count:(STATE.surveys||[]).length, setup:Object.assign({},s)});
+  saveSurveyArchive(archive);
+}
+function renderPastExperiments(app){
+  const archive=loadSurveyArchive();
+  let rows='';
+  if(archive.length===0){
+    rows='<p class="muted" style="text-align:center;margin:24px 0;">No past experiments archived yet.<br>Sessions are saved here when you Reset All Data.</p>';
+  } else {
+    archive.slice().reverse().forEach((exp,ri)=>{
+      const i=archive.length-1-ri;
+      rows+=`<div class="list-card" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <div style="font-weight:700;font-size:16px;">📁 ${escapeHtml(exp.label)}</div>
+        <div style="font-size:13px;opacity:0.75;">${exp.count||0} surveys · Archived ${escapeHtml((exp.date||'').replace('T',' ').substring(0,16))}</div>
+        <button class="btn outline" style="margin:6px 0 0;padding:10px;font-size:14px;" data-dl="${i}">📥 Download CSV</button>
+      </div>`;
+    });
+  }
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">\u2190</button><span class="title">Past Experiments</span></div>
+    <div class="content">
+      ${rows}
+      <div class="spacer"></div>
+      <button class="btn outline" id="home2">\u2190 Home</button>
+      ${archive.length>0?'<button class="btn danger" style="margin-top:6px;" id="ca">Clear archive</button>':''}
+    </div>`;
+  document.getElementById('back').onclick=()=>go('home');
+  document.getElementById('home2').onclick=()=>go('home');
+  const cab=document.getElementById('ca'); if(cab) cab.onclick=()=>{ if(confirm('Clear all archived experiments?')){ saveSurveyArchive([]); go('pastExperiments'); } };
+  app.querySelectorAll('[data-dl]').forEach(btn=>{
+    btn.onclick=(e)=>{
+      e.stopPropagation();
+      const exp=archive[Number(btn.dataset.dl)]; if(!exp) return;
+      const blob=new Blob([exp.csv],{type:'text/csv;charset=utf-8;'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download=exp.label+'.csv';
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },1000);
+    };
+  });
+}
+
+/* =============================================================================
+   CHIEF SURVEY — Sections A–I + Enumerator Notes
+   Stored in STATE.chiefSurveys[] and STATE.chiefDraft.
+============================================================================= */
+const CS = {
+  A2:{sec:'A',t:'text',text:'Year began serving in this role'},
+  A3:{sec:'A',t:'text',text:'Under which Traditional Council (TC) or Bunga does this village fall? (Record TC name and district — used to match with household survey site data)\nTC name: ______________\nDistrict: O.R. Tambo / Alfred Nzo / Amathole / Joe Gqabi / Chris Hani / Other: ______________\nWard number: ______________'},
+  A4:{sec:'A',t:'text',text:'Traditional Council / Bunga name and district municipality'},
+  A5:{sec:'A',t:'single',text:'Expect to continue serving in this role over the next five years?',opts:['Yes','No','Not sure']},
+  A6:{sec:'A',t:'single',text:'Chieftaincy formally recognised under the Traditional and Khoi-San Leadership Act 2019?',opts:['Yes','No','Recognition still pending / disputed','Not sure']},
+  B1:{sec:'B',t:'text',text:'Three most important public needs in this community right now (record verbatim — do not suggest answers): 1. ___ 2. ___ 3. ___'},
+  B2:{sec:'B',t:'multi',text:'When a community project is being planned, who usually participates in the decision? (Select all that apply)',opts:['Inkosi','Full Traditional Council (includes 30% women under the 2019 Act)','Ward councillor'],other:true},
+  B3:{sec:'B',t:'gate1',text:'In the past 12 months, have you helped organise any community project or public-good activity? If yes: What was it?'},
+  B4:{sec:'B',t:'b3gate',text:'In the past 12 months, have community members contributed labour (ilima), money, food, or materials for a shared purpose? If yes: What was the purpose, and who helped organise it?'},
+  B5:{sec:'B',t:'multi',text:'Past 12 months: communicated with any of the following about community needs? (Select all that apply)',opts:['Local / District Ward councillor (e.g. O.R. Tambo DM, Buffalo City Metro, Amathole DM)','DRDAR (Dept. of Rural Development & Agrarian Reform)','DWS (Dept. of Water & Sanitation)','None of the above'],other:true},
+  C1:{sec:'C',t:'multi',text:'What kinds of disputes do people most often bring to you? (Select all that apply)',opts:['Land boundaries / land allocation','Grazing rights and livestock','Water access — boreholes, springs, communal taps (amanzi)','Ilobolo / marriage negotiations',"Inheritance — distribution of a deceased person's estate",'Witchcraft accusations (ubugqwirha)','Neighbour disputes','Youth-related problems — crime, alcohol, drugs','Political disagreements'],other:true},
+  C3:{sec:'C',t:'single',text:'When people disagree about where a community project should go or who should benefit, how is the decision usually made?',opts:['Inkosi decides alone','Open discussion at imbizo','Traditional Council votes','Ward councillor decides'],other:true},
+  C4:{sec:'C',t:'single',text:'How easy or difficult is it to get people to cooperate on a common project?',opts:['Very difficult','Somewhat difficult','Neither easy nor difficult','Somewhat easy','Very easy']},
+  C4a:{sec:'C',t:'text',text:'Follow-up (open): What usually makes cooperation easier or harder? (Record verbatim)'},
+  D1:{sec:'D',t:'single',text:'When outside resources or government projects come to this community — e.g. RDP housing, water infrastructure, EPWP jobs, fencing — who usually helps decide how they are used or distributed?',opts:['Inkosi','Ward councillor / government department','Traditional Council','Joint decision — inkosi + councillor'],other:true},
+  D2:{sec:'D',t:'single',text:'How would you describe the working relationship between traditional leadership and the ward councillor in this area?',opts:['Very poor','Poor','Neutral','Good','Very good']},
+  D3:{sec:'D',t:'text',text:'Follow-up (open): Cooperation, tension, or both between traditional leadership and elected structures? (Record verbatim)'},
+  D4:{sec:'D',t:'single',text:'Land tenure arrangement in this community?',opts:['Former Transkei / Ciskei homeland state land administered by DRDAR','Communal land under a CLARA process','Permission to Occupy (PTO) / trust land','Surveyed land with individual title deeds','Not sure']},
+  E1:{sec:'E',t:'multi',text:'If money or materials are provided for a community purpose, how are community members usually informed about how they are used?',opts:['Announced at an imbizo','Written notice posted in the village','Social media','Committee report'],other:true},
+  E2:{sec:'E',t:'single',text:'Who normally keeps records or receipts for a community fund or project?',opts:['Inkosi','Traditional Council treasurer',"Ward councillor's office"],other:true},
+  E3:{sec:'E',t:'multi',text:'If community members think a fund was not used fairly — what options do they have? (Select all that apply)',opts:['Inkosi','Imbizo','Traditional Council','Ward councillor','EC House of Traditional and Khoi-San Leaders',"Local Magistrate's Court",'Nothing'],other:true},
+  E4:{sec:'E',t:'multi',text:'Are there groups whose voices are sometimes harder to include? (Select all that apply)',opts:['Women','Youth (abantu abatsha)','Poorer households (imizi emityhini)','Newcomers (izifiki)','People with disabilities','No — everyone is included equally'],other:true},
+  F1:{sec:'F',t:'multi',text:'Suppose a village fund of ~R5,000–R10,000 is created. Most useful AND feasible use here? (Ask openly first)',opts:['Water (amanzi)','School materials','Communal garden (imifuno)','Agri-inputs','Animal health supplies','Fencing (ukubiyelwa kwemfuyo)','Youth sports equipment'],other:true},
+  F4:{sec:'F',t:'single',text:'Is there an existing trusted community structure — e.g. a stokvel, burial society (umbutho womngcwabo), water committee, or school governing body — that already manages shared funds reliably in this community?',opts:['Yes','No']},
+  F4b:{sec:'F',t:'text',text:'If yes — describe the structure'},
+  F5:{sec:'F',t:'text',text:'Is there anything that makes it particularly difficult to run a fair community project or fund here — anything else you want us to know?\n\n(Open — record verbatim)'},
+  H2:{sec:'H',t:'single',text:'Gender:', opts:['Male','Female','Other / prefer not to say']},
+  H3:{sec:'H',t:'cs_number',text:'Age:', unit:'years', min:0, max:130},
+  H4:{sec:'H',t:'single',text:'Marital status:', opts:['Single','Married (civil / legal / customary / ilobolo)','Widowed','Divorced / separated','Cohabitated / Partnership']},
+  H5:{sec:'H',t:'single',text:'Highest level of education completed:', opts:['No formal education','Some primary (Grades 1–6)','Completed primary (Grade 7)','Some secondary (Grades 8–11)','Matric / Grade 12','Post-school certificate','Diploma','University degree or above']},
+  H6:{sec:'H',t:'text',text:'Main occupation:'},
+  H7:{sec:'H',t:'text',text:'Secondary occupation (if any):', optional:true},
+  H7a:{sec:'H',t:'cs_number',text:'Total number of people living in your household, including yourself:', unit:'persons', min:0, max:60},
+  H7b:{sec:'H',t:'cs_number',text:'Number of working household members (anyone earning income, including grants):', unit:'persons', min:0, max:60},
+  H8:{sec:'H',t:'single',other:true,text:"What is the PRIMARY source of your household's income? (Select the most important one)",
+      opts:['Farming / livestock','Wage employment (formal job)','Casual / piece work (temporary)','Informal businesses / spaza / hawking','Government grants (e.g. child support grant, old-age pension, disability grant)','Remittances — money sent by family members from the city or at the mines','Other']},
+  H8a:{sec:'H',t:'single',text:'Is your household income:', opts:['Regular and predictable','Seasonal (e.g. harvest, contract work)','Irregular','Very uncertain']},
+  H9:{sec:'H',t:'single',text:'What is the approximate total monthly income of your household before expenses? (Include wages, grants, remittances, business income)',
+      opts:['No income','Less than R1,000','R1,001 – R5,000','R5,001 – R10,000','R10,001 – R15,000','R15,001 – R20,000','R20,001 – R25,000','More than R25,000']},
+  H10:{sec:'H',t:'single',other:true,text:'What is the main material of the roof of your household\'s dwelling?',
+      opts:['Thatch / grass / traditional materials','Corrugated iron / zinc / metal sheets','Asbestos sheets','Tiles','Concrete / cement slab','Mixed materials','Other']},
+  H10a:{sec:'H',t:'cs_number',text:'Total number of rooms:', unit:'rooms', min:0, max:40},
+  H11:{sec:'H',t:'cs_services',text:'Which of the following services does your household have access to? (Yes or No for each)'},
+  H12:{sec:'H',t:'multi',text:'Own or have right to use agricultural land? If yes — how was access obtained?',opts:['Yes — owns / has rights','No','Allocated by the inkosi / Traditional Council','Permission to Occupy (PTO)','Communal grazing — no individual allocation','Registered title deed','Inherited within the family'],other:true},
+  I4:{sec:'I',t:'single',text:'How often do you travel outside this village for any reason?',opts:['Never','Less than once a year','A few times a year','About once a month','A few times a month','About once a week','Several times a week','Daily']},
+  J1:{sec:'J',t:'text',text:'Mobile phone number (optional, for follow-up)',optional:true},
+  EN1:{sec:'EN',t:'text',text:'General atmosphere and willingness to participate',optional:true},
+  EN2:{sec:'EN',t:'multi',text:'Language(s) used during interview',opts:['isiXhosa','English','Afrikaans'],other:true,optional:true},
+  EN3:{sec:'EN',t:'single',text:'Gender of enumerator',opts:['Male','Female'],optional:true},
+  EN4:{sec:'EN',t:'text',text:'Presence of others during interview (anyone who may have influenced answers — e.g. induna, family member, ward committee member)',optional:true},
+  EN5:{sec:'EN',t:'text',text:'Any follow-up required',optional:true}
+};
+const CS_SECTIONS=[
+  {n:1,label:'A. Role, Tenure & Appointment',keys:['A2','A3','A4','A5','A6']},
+  {n:2,label:'B. Development Brokerage & Public Goods',keys:['B1','B2','B3','B4','B5']},
+  {n:3,label:'C. Conflict Resolution & Coordination',keys:['C1','C3','C4','C4a']},
+  {n:4,label:'D. Relations with Politicians & Govt',keys:['D1','D2','D3','D4']},
+  {n:5,label:'E. Accountability & Inclusion',keys:['E1','E2','E3','E4']},
+  {n:6,label:'F. Village Fund (Experiment-Specific)',keys:['F1','F4','F4b','F5']},
+  {n:7,label:'H. Demographic Information',keys:['H2','H3','H4','H5','H6','H7','H7a','H7b','H8','H8a','H9','H10','H10a','H11','H12']},
+  {n:8,label:'I. Village Residency & Mobility',keys:['I4']},
+  {n:9,label:'J. Contact',keys:['J1']},
+  {n:10,label:'Enumerator Notes',keys:['EN1','EN2','EN3','EN4','EN5']}
+];
+function csBlankAnswers(){ const a={}; Object.keys(CS).forEach(k=>{a[k]=''; }); return a; }
+
+function csGetSelArr(val){
+  if(!val) return [];
+  if(Array.isArray(val)) return val;
+  return String(val).split('|').filter(Boolean);
+}
+
+/* Returns true if a chief survey answer is considered filled */
+function csIsAnswered(k, ans){
+  const def=CS[k]; if(!def) return true; // unknown key = don't block
+  const val=ans[k];
+  switch(def.t){
+    case 'text':
+      return val!=null && String(val).trim()!=='';
+    case 'single': return val!=null && val!=='';
+    case 'multi': return csGetSelArr(val).length>0;
+    case 'cs_services': {
+      const svc=val||{};
+      return ['electricity','piped_inside','piped_yard','communal_tap','flush_inside','flush_outside','pit_latrine','bucket'].every(k=>!!svc[k]);
+    }
+    case 'cs_number': return val!=null && String(val).trim()!=='';
+    case 'gate1': return (ans.B3_yn||'')!=='';
+    case 'b3gate': return (ans.B4_yn||'')!=='';
+    default: return true;
+  }
+}
+
+/* Returns list of unanswered REQUIRED question keys for a given section number.
+   Optional questions (flagged by def.optional) and skipped questions are excluded. */
+function csMissingRequired(secNum, ans){
+  const sec=CS_SECTIONS.find(s=>s.n===secNum); if(!sec) return [];
+  const missing=[];
+  sec.keys.forEach(k=>{
+    const def=CS[k]; if(!def||def.optional) return;
+    const {show}=csIsVisible(k,ans);
+    if(!show) return; // skipped — don't require
+    // B3 / B4 gates: sub-detail fields are optional follow-up, don't block
+    if(k==='B3'){ if(!(ans.B3_yn||'')) missing.push(k); return; }
+    if(k==='B4'){ if(!(ans.B4_yn||'')) missing.push(k); return; }
+    if(!csIsAnswered(k,ans)) missing.push(k);
+  });
+  return missing;
+}
+function csIsVisible(k, ans){
+  switch(k){
+    case 'F4b':
+      return ans.F4==='Yes' ? {show:true,skipNote:null} : {show:false,skipNote:'Skip \u2014 F4 \u2260 Yes'};
+    default:
+      return {show:true,skipNote:null};
+  }
+}
+function csH12SubVisible(ans){ return csGetSelArr(ans.H12).includes('Yes \u2014 owns / has rights'); }
+
+function renderChiefSurvey(app){
+  const secNum=routeArgs.sec||1;
+  const mode=routeArgs.mode||'new';
+  const sec=CS_SECTIONS.find(s=>s.n===secNum)||CS_SECTIONS[0];
+  if(mode==='new'&&!STATE.chiefDraft){
+    STATE.chiefDraft={answers:csBlankAnswers(),sec:1,startedAt:new Date().toISOString()};
+    saveState();
+  }
+  const draft=STATE.chiefDraft||{answers:csBlankAnswers(),sec:1,startedAt:''};
+  const ans=draft.answers;
+
+  const H12_GATE=['Yes \u2014 owns / has rights','No'];
+  const H12_SUB=['Allocated by the inkosi / Traditional Council','Permission to Occupy (PTO)','Communal grazing \u2014 no individual allocation','Registered title deed','Inherited within the family'];
+
+  let qHTML='';
+  sec.keys.forEach(k=>{
+    const def=CS[k]; if(!def) return;
+    const val=ans[k]||'';
+    const {show,skipNote}=csIsVisible(k,ans);
+
+    if(!show && k!=='F4b'){
+      qHTML+=`<div class="qcard" id="qcard-${k}" style="opacity:0.35;pointer-events:none;">
+        <div class="qtext" style="font-size:13px;"><b>${k}</b> \u2014 ${escapeHtml(def.text)}</div>
+        <div class="cs-skip-note" style="font-size:12px;color:#ffdd88;margin-top:4px;">\u23E9 ${escapeHtml(skipNote||'Skip')}</div></div>`;
+      return;
+    }
+    const banner=skipNote?`<div class="cs-visibility-banner" style="font-size:12px;color:#ffdd88;background:rgba(255,200,50,0.12);border-radius:6px;padding:5px 8px;margin-bottom:4px;">\u26A0\uFE0F ${escapeHtml(skipNote)}</div>`:'';
+    // F4b is a real field even when its gate (F4) hasn't unlocked it yet, so the
+    // input already exists in the DOM and can be un-dimmed in place when F4 = Yes.
+    const dimStyle=(k==='F4b'&&!show)?' style="opacity:0.35;pointer-events:none;"':'';
+
+    if(def.t==='cs_services'){
+      // H11: identical Yes/No grid to participant Q51
+      const svc=ans.H11||{};
+      const svcRows=[
+        {key:'electricity',label:'Electricity'},
+        {key:'piped_inside',label:'Piped water inside dwelling'},
+        {key:'piped_yard',label:'Piped water in yard'},
+        {key:'communal_tap',label:'Communal tap (standpipe)'},
+        {key:'flush_inside',label:'Flush toilet (inside)'},
+        {key:'flush_outside',label:'Flush toilet (outside)'},
+        {key:'pit_latrine',label:'Pit latrine / VIP'},
+        {key:'bucket',label:'Bucket system'}
+      ];
+      let svcHTML=`<div class="qcard" id="qcard-H11">${banner}<div class="qtext"><b>H11</b> — ${escapeHtml(def.text)}</div><div class="opts">`;
+      svcRows.forEach(r=>{
+        const v=svc[r.key]||'';
+        svcHTML+=`<div class="svc-row"><span class="svc-label">${escapeHtml(r.label)}</span><span class="svc-btns">
+          <span class="yn ${v==='Yes'?'on':''}" data-cq-svc="H11" data-row="${r.key}" data-val="Yes">Yes</span>
+          <span class="yn ${v==='No'?'on':''}" data-cq-svc="H11" data-row="${r.key}" data-val="No">No</span></span></div>`;
+      });
+      svcHTML+=`</div><div class="qerr" id="csqerr-H11"></div></div>`;
+      qHTML+=svcHTML;
+      return; // skip generic path
+    }
+    if(def.t==='cs_number'){
+      // numeric input mirroring the subject-survey number fields
+      const numVal=ans[k]||'';
+      qHTML+=`<div class="qcard" id="qcard-${k}">${banner}<div class="qtext"><b>${k}</b> — ${escapeHtml(def.text)}</div>
+        <div class="field" style="display:flex;align-items:center;gap:10px;">
+          <input data-cq="${k}" type="text" inputmode="numeric" pattern="[0-9]*" class="num" style="max-width:120px;" value="${escapeHtml(numVal)}" placeholder="0">
+          ${def.unit?`<span class="muted">${escapeHtml(def.unit)}</span>`:''}
+        </div>
+        <div class="qerr" id="csqerr-${k}"></div>
+      </div>`;
+      return;
+    }
+    if(def.t==='gate1'){
+      // B3: Yes/No gate + one conditional detail field (Project)
+      const b3yn=ans.B3_yn||'';
+      const b3project=ans.B3_project||'';
+      qHTML+=`<div class="qcard" id="qcard-B3">${banner}
+        <div class="qtext"><b>B3</b> — ${escapeHtml(def.text)}</div>
+        <div class="opt single ${b3yn==='Yes'?'selected':''}" data-b3yn="Yes"><span class="mark">${b3yn==='Yes'?'✓':''}</span><span>Yes</span></div>
+        <div class="opt single ${b3yn==='No'?'selected':''}" data-b3yn="No"><span class="mark">${b3yn==='No'?'✓':''}</span><span>No</span></div>
+        <div id="cs-sub-B3">${b3yn==='Yes'?`
+        <div class="field" style="margin-top:8px;"><label style="font-size:13px;opacity:0.85;">Project:</label>
+          <input data-cq="B3_project" class="txt" value="${escapeHtml(b3project)}" placeholder="Describe the project"></div>`:''}
+        ${b3yn==='No'?`<div style="font-size:12px;color:#ffdd88;margin-top:4px;">⏩ Sub-item not applicable — B3 = No</div>`:''}</div>
+        <div class="qerr" id="csqerr-B3"></div>
+      </div>`;
+      return;
+    }
+    if(def.t==='b3gate'){
+      // B4: Yes/No gate + conditional sub-fields for Purpose and Organised by
+      const b4yn=ans.B4_yn||'';
+      const b4purpose=ans.B4_purpose||'';
+      const b4org=ans.B4_org||'';
+      qHTML+=`<div class="qcard" id="qcard-B4">${banner}
+        <div class="qtext"><b>B4</b> — ${escapeHtml(def.text)}</div>
+        <div class="opt single ${b4yn==='Yes'?'selected':''}" data-b4yn="Yes"><span class="mark">${b4yn==='Yes'?'✓':''}</span><span>Yes</span></div>
+        <div class="opt single ${b4yn==='No'?'selected':''}" data-b4yn="No"><span class="mark">${b4yn==='No'?'✓':''}</span><span>No</span></div>
+        <div id="cs-sub-B4">${b4yn==='Yes'?`
+        <div class="field" style="margin-top:8px;"><label style="font-size:13px;opacity:0.85;">Purpose (what was the shared purpose?):</label>
+          <input data-cq="B4_purpose" class="txt" value="${escapeHtml(b4purpose)}" placeholder="e.g. building a fence, repairing a communal tap..."></div>
+        <div class="field"><label style="font-size:13px;opacity:0.85;">Organised by:</label>
+          <input data-cq="B4_org" class="txt" value="${escapeHtml(b4org)}" placeholder="e.g. inkosi, ward committee, women\'s group..."></div>`:''}
+        ${b4yn==='No'?`<div style="font-size:12px;color:#ffdd88;margin-top:4px;">⏩ Sub-items not applicable — B4 = No</div>`:''}</div>
+        <div class="qerr" id="csqerr-B4"></div>
+      </div>`;
+      return;
+    }
+    if(def.t==='text'){
+      qHTML+=`<div class="qcard" id="qcard-${k}"${dimStyle}>${banner}<div class="qtext"><b>${k}</b> \u2014 ${escapeHtml(def.text)}</div>
+        <textarea data-cq="${k}" style="width:100%;min-height:80px;background:rgba(255,255,255,0.08);color:#fff;border:1.5px solid rgba(255,255,255,0.4);border-radius:12px;padding:10px;font-size:15px;font-family:inherit;resize:vertical;">${escapeHtml(val)}</textarea>
+        <div class="qerr" id="csqerr-${k}"></div></div>`;
+    } else {
+      const selArr=csGetSelArr(val);
+      const isSingle=def.t==='single';
+
+      if(k==='H12'){
+        const h12selArr=csGetSelArr(val);
+        const subVisible=csH12SubVisible(ans);
+        const gateBtns=H12_GATE.map(o=>{
+          const on=h12selArr.includes(o);
+          return `<div class="opt multi ${on?'selected':''}" data-cq="H12" data-v="${escapeHtml(o)}" data-single="0"><span class="mark">${on?'\u2713':''}</span><span>${escapeHtml(o)}</span></div>`;
+        }).join('');
+        let subHTML='';
+        if(subVisible){
+          subHTML=`<div style="margin-top:8px;font-size:13px;opacity:0.8;">If yes \u2014 how was land access obtained? (Select all that apply)</div>`;
+          subHTML+=H12_SUB.map(o=>{
+            const on=h12selArr.includes(o);
+            return `<div class="opt multi ${on?'selected':''}" data-cq="H12" data-v="${escapeHtml(o)}" data-single="0"><span class="mark">${on?'\u2713':''}</span><span>${escapeHtml(o)}</span></div>`;
+          }).join('');
+          subHTML+=`<div class="field" style="margin-top:4px;"><input data-cq-oth="H12" class="txt" placeholder="Other: ___" value="${escapeHtml(ans.H12__o||'')}"></div>`;
+        } else if(h12selArr.includes('No')){
+          subHTML=`<div style="font-size:12px;color:#ffdd88;margin-top:4px;">\u23E9 Skip land access sub-items \u2014 H12 = No</div>`;
+        }
+        qHTML+=`<div class="qcard" id="qcard-H12">${banner}<div class="qtext"><b>H12</b> \u2014 Own or have right to use agricultural land?</div>${gateBtns}<div id="cs-sub-H12">${subHTML}</div><div class="qerr" id="csqerr-H12"></div></div>`;
+        return;
+      }
+
+      const b5note=(k==='B5')?`<div style="font-size:13px;color:#adf;background:rgba(100,150,255,0.12);border-radius:6px;padding:6px 8px;margin-bottom:6px;">\uD83D\uDCCB B5: For each ticked agency, record how often they communicated in the frequency field that appears below.</div>`:'';
+
+      let opts=[...(def.opts||[]),...(def.extras||[])];
+      const btns=opts.map(o=>{
+        const on=isSingle?(val===o):selArr.includes(o);
+        return `<div class="opt ${isSingle?'single':'multi'} ${on?'selected':''}" data-cq="${k}" data-v="${escapeHtml(o)}" data-single="${isSingle?1:0}"><span class="mark">${on?'\u2713':''}</span><span>${escapeHtml(o)}</span></div>`;
+      }).join('');
+      const oth=def.other?`<div class="field" style="margin-top:4px;"><input data-cq-oth="${k}" class="txt" placeholder="Other: ___" value="${escapeHtml(ans[k+'__o']||'')}"></div>`:'';
+
+      let b5freqHTML='';
+      if(k==='B5'){
+        const freqAgencies=['Local / District Ward councillor (e.g. O.R. Tambo DM, Buffalo City Metro, Amathole DM)','DRDAR (Dept. of Rural Development & Agrarian Reform)','DWS (Dept. of Water & Sanitation)'];
+        const curSel=csGetSelArr(val);
+        const visible=freqAgencies.filter(a=>curSel.includes(a));
+        if(visible.length>0){
+          b5freqHTML=`<div style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.15);padding-top:8px;font-size:13px;opacity:0.85;">Frequency for each selected agency:</div>`+
+            visible.map(a=>{
+              const fkey='B5_freq_'+a.replace(/[^a-zA-Z0-9]/g,'_').substring(0,30);
+              return `<div class="field" style="margin-bottom:3px;"><label style="font-size:12px;opacity:0.8;">${escapeHtml(a)}</label><input data-cq="${fkey}" class="txt" value="${escapeHtml(ans[fkey]||'')}" placeholder="e.g. monthly, 3x/year"></div>`;
+            }).join('');
+        }
+      }
+
+      const b5freqWrap=k==='B5'?`<div id="cs-freq-B5">${b5freqHTML}</div>`:b5freqHTML;
+      qHTML+=`<div class="qcard" id="qcard-${k}">${banner}${b5note}<div class="qtext"><b>${k}</b> \u2014 ${escapeHtml(def.text)}</div>${btns}${oth}${b5freqWrap}<div class="qerr" id="csqerr-${k}"></div></div>`;
+    }
+  });
+
+  const isLast=secNum===CS_SECTIONS.length;
+  const pct=Math.round(secNum/CS_SECTIONS.length*100);
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">\uD83C\uDFE0</button><span class="title">\uD83D\uDC51 Chief Survey</span><span class="step">${secNum}/${CS_SECTIONS.length}</span></div>
+    <div class="progress"><div style="width:${pct}%"></div></div>
+    <div class="content">
+      <h2 style="margin-top:8px;font-size:18px;">${escapeHtml(sec.label)}</h2>
+      ${qHTML}
+      <div class="btn-row" style="margin-top:16px;">
+        ${secNum>1?'<button class="btn outline" id="cprev">\u2190 Back</button>':''}
+        ${isLast?'<button class="btn primary" id="csave">\uD83D\uDCBE Save Chief Survey</button>':'<button class="btn primary" id="cnext">Next \u2192</button>'}
+      </div>
+      <button class="btn outline" id="chome" style="margin-top:8px;">\uD83C\uDFE0 Home (save progress)</button>
+    </div>`;
+
+  /* ---- In-place sub-zone update helpers (avoid full re-render / scroll jump) ---- */
+
+  function csSubB3HTML(a){
+    const yn=a.B3_yn||'';
+    if(yn==='Yes') return `
+      <div class="field" style="margin-top:8px;"><label style="font-size:13px;opacity:0.85;">Project:</label>
+        <input data-cq="B3_project" class="txt" value="${escapeHtml(a.B3_project||'')}" placeholder="Describe the project"></div>`;
+    if(yn==='No') return `<div style="font-size:12px;color:#ffdd88;margin-top:4px;">⏩ Sub-item not applicable — B3 = No</div>`;
+    return '';
+  }
+
+  function csSubB4HTML(a){
+    const yn=a.B4_yn||'';
+    if(yn==='Yes') return `
+      <div class="field" style="margin-top:8px;"><label style="font-size:13px;opacity:0.85;">Purpose (what was the shared purpose?):</label>
+        <input data-cq="B4_purpose" class="txt" value="${escapeHtml(a.B4_purpose||'')}" placeholder="e.g. building a fence, repairing a communal tap..."></div>
+      <div class="field"><label style="font-size:13px;opacity:0.85;">Organised by:</label>
+        <input data-cq="B4_org" class="txt" value="${escapeHtml(a.B4_org||'')}" placeholder="e.g. inkosi, ward committee, women's group..."></div>`;
+    if(yn==='No') return `<div style="font-size:12px;color:#ffdd88;margin-top:4px;">⏩ Sub-items not applicable — B4 = No</div>`;
+    return '';
+  }
+
+  function csSubH12HTML(a){
+    const h12sel=csGetSelArr(a.H12);
+    const H12_SUB_=['Allocated by the inkosi / Traditional Council','Permission to Occupy (PTO)','Communal grazing \u2014 no individual allocation','Registered title deed','Inherited within the family'];
+    if(!h12sel.includes('Yes \u2014 owns / has rights')) return h12sel.includes('No')?`<div style="font-size:12px;color:#ffdd88;margin-top:4px;">⏩ Skip land access sub-items — H12 = No</div>`:'';
+    let h=`<div style="margin-top:8px;font-size:13px;opacity:0.8;">If yes — how was land access obtained? (Select all that apply)</div>`;
+    h+=H12_SUB_.map(o=>`<div class="opt multi ${h12sel.includes(o)?'selected':''}" data-cq="H12" data-v="${escapeHtml(o)}" data-single="0"><span class="mark">${h12sel.includes(o)?'✓':''}</span><span>${escapeHtml(o)}</span></div>`).join('');
+    h+=`<div class="field" style="margin-top:4px;"><input data-cq-oth="H12" class="txt" placeholder="Other: ___" value="${escapeHtml(a.H12__o||'')}"></div>`;
+    return h;
+  }
+
+  function csSubB5FreqHTML(a){
+    const FA=['Local / District Ward councillor (e.g. O.R. Tambo DM, Buffalo City Metro, Amathole DM)','DRDAR (Dept. of Rural Development & Agrarian Reform)','DWS (Dept. of Water & Sanitation)'];
+    const curSel=csGetSelArr(a.B5);
+    const visible=FA.filter(ag=>curSel.includes(ag));
+    if(!visible.length) return '';
+    return `<div style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.15);padding-top:8px;font-size:13px;opacity:0.85;">Frequency for each selected agency:</div>`+
+      visible.map(ag=>{
+        const fk='B5_freq_'+ag.replace(/[^a-zA-Z0-9]/g,'_').substring(0,30);
+        return `<div class="field" style="margin-bottom:3px;"><label style="font-size:12px;opacity:0.8;">${escapeHtml(ag)}</label><input data-cq="${fk}" class="txt" value="${escapeHtml(a[fk]||'')}" placeholder="e.g. monthly, 3x/year"></div>`;
+      }).join('');
+  }
+
+  /* Update a sub-zone div in-place without scrolling */
+  function csUpdateSub(id, html){
+    const el=document.getElementById(id); if(!el) return;
+    el.innerHTML=html;
+    // Re-wire any new inputs/opts inside the sub-zone
+    el.querySelectorAll('input[data-cq]').forEach(inp=>{ inp.oninput=()=>{ ans[inp.dataset.cq]=inp.value; saveState(); }; });
+    el.querySelectorAll('input[data-cq-oth]').forEach(inp=>{ inp.oninput=()=>{ ans[inp.dataset.cqOth+'__o']=inp.value; saveState(); }; });
+    el.querySelectorAll('.opt[data-cq]').forEach(opt=>{
+      opt.onclick=()=>{
+        const q=opt.dataset.cq; const v=opt.dataset.v; const single=opt.dataset.single==='1';
+        if(single){ ans[q]=v; saveState(); el.querySelectorAll(`[data-cq="${q}"][data-single="1"]`).forEach(x=>{x.classList.remove('selected');x.querySelector('.mark').textContent='';}); opt.classList.add('selected'); opt.querySelector('.mark').textContent='✓'; }
+        else { let sel=Array.isArray(ans[q])?ans[q]:(ans[q]?String(ans[q]).split('|').filter(Boolean):[]); if(sel.includes(v)) sel=sel.filter(x=>x!==v); else sel.push(v); ans[q]=sel; saveState(); opt.classList.toggle('selected',sel.includes(v)); opt.querySelector('.mark').textContent=sel.includes(v)?'✓':''; if(q==='H12') csUpdateSub('cs-sub-H12',csSubH12HTML(ans)); if(q==='B5'){ const fz=document.getElementById('cs-freq-B5'); if(fz){fz.innerHTML=csSubB5FreqHTML(ans); fz.querySelectorAll('input[data-cq]').forEach(inp=>{inp.oninput=()=>{ans[inp.dataset.cq]=inp.value;saveState();};});} } }
+      };
+    });
+  }
+
+  /* Update skip/show state of a separate card (F4b) */
+  function csUpdateCardVisibility(k){
+    const card=document.getElementById('qcard-'+k); if(!card) return;
+    const {show,skipNote}=csIsVisible(k,ans);
+    card.style.opacity=show?'':'0.35';
+    card.style.pointerEvents=show?'':'none';
+    const banner=card.querySelector('.cs-visibility-banner');
+    if(banner) banner.style.display=show?'none':'';
+    let sn=card.querySelector('.cs-skip-note');
+    if(!show){
+      if(!sn){ sn=document.createElement('div'); sn.className='cs-skip-note'; sn.style.cssText='font-size:12px;color:#ffdd88;margin-top:4px;'; card.appendChild(sn); }
+      sn.textContent='⏩ '+(skipNote||'Skip');
+    } else if(sn){
+      sn.remove();
+    }
+  }
+
+  // B3 gate
+  app.querySelectorAll('[data-b3yn]').forEach(el=>{
+    el.onclick=()=>{
+      ans.B3_yn=el.dataset.b3yn; saveState();
+      // Update gate button states in-place
+      app.querySelectorAll('[data-b3yn]').forEach(b=>{
+        b.classList.toggle('selected', b.dataset.b3yn===ans.B3_yn);
+        b.querySelector('.mark').textContent=b.dataset.b3yn===ans.B3_yn?'✓':'';
+      });
+      csUpdateSub('cs-sub-B3', csSubB3HTML(ans));
+    };
+  });
+
+  // B4 gate
+  app.querySelectorAll('[data-b4yn]').forEach(el=>{
+    el.onclick=()=>{
+      ans.B4_yn=el.dataset.b4yn; saveState();
+      // Update gate button states in-place
+      app.querySelectorAll('[data-b4yn]').forEach(b=>{
+        b.classList.toggle('selected', b.dataset.b4yn===ans.B4_yn);
+        b.querySelector('.mark').textContent=b.dataset.b4yn===ans.B4_yn?'✓':'';
+      });
+      csUpdateSub('cs-sub-B4', csSubB4HTML(ans));
+    };
+  });
+
+  // H11 services grid
+  app.querySelectorAll('[data-cq-svc]').forEach(el=>{
+    el.onclick=()=>{
+      const q=el.dataset.cqSvc; const row=el.dataset.row; const v=el.dataset.val;
+      if(!ans[q]||typeof ans[q]!=='object') ans[q]={};
+      ans[q][row]=v; saveState();
+      // Update just this row's buttons visually
+      app.querySelectorAll(`[data-cq-svc="${q}"][data-row="${row}"]`).forEach(b=>b.classList.toggle('on',b.dataset.val===v));
+    };
+  });
+
+  app.querySelectorAll('[data-cq]').forEach(el=>{
+    if(el.tagName==='TEXTAREA'){
+      el.oninput=()=>{ ans[el.dataset.cq]=el.value; saveState(); };
+    } else if(el.tagName==='INPUT'){
+      el.oninput=()=>{ ans[el.dataset.cq]=el.value; saveState(); };
+    } else {
+      el.onclick=()=>{
+        const q=el.dataset.cq; const v=el.dataset.v; const single=el.dataset.single==='1';
+        if(single){
+          ans[q]=v; saveState();
+          app.querySelectorAll(`[data-cq="${q}"][data-single="1"]`).forEach(x=>{ x.classList.remove('selected'); x.querySelector('.mark').textContent=''; });
+          el.classList.add('selected'); el.querySelector('.mark').textContent='\u2713';
+          // Update dependent card visibility in-place
+          if(q==='F4') csUpdateCardVisibility('F4b');
+        } else {
+          let sel=Array.isArray(ans[q])?ans[q]:(ans[q]?String(ans[q]).split('|').filter(Boolean):[]);
+          if(sel.includes(v)) sel=sel.filter(x=>x!==v); else sel.push(v);
+          ans[q]=sel; saveState();
+          el.classList.toggle('selected',sel.includes(v));
+          el.querySelector('.mark').textContent=sel.includes(v)?'\u2713':'';
+          // In-place sub-zone and visibility updates
+          if(q==='H12') csUpdateSub('cs-sub-H12', csSubH12HTML(ans));
+          if(q==='B5'){ const fz=document.getElementById('cs-freq-B5'); if(fz){fz.innerHTML=csSubB5FreqHTML(ans); fz.querySelectorAll('input[data-cq]').forEach(inp=>{inp.oninput=()=>{ans[inp.dataset.cq]=inp.value;saveState();};});} }
+        }
+      };
+    }
+  });
+  app.querySelectorAll('[data-cq-oth]').forEach(el=>{ el.oninput=()=>{ ans[el.dataset.cqOth+'__o']=el.value; saveState(); }; });
+
+  const cprev=document.getElementById('cprev'); if(cprev) cprev.onclick=()=>go('chiefSurvey',{mode:'resume',sec:secNum-1});
+  // Required field check helper
+  function csHighlightMissing(missing){
+    missing.forEach(k=>{
+      const card=document.getElementById('qcard-'+k)||app.querySelector(`.qcard:has(#csqerr-${k})`);
+      const err=document.getElementById('csqerr-'+k);
+      if(err) err.textContent='Required — please answer this question.';
+      if(card){ card.style.border='1.5px solid rgba(255,100,100,0.7)'; card.scrollIntoView({behavior:'smooth',block:'center'}); }
+    });
+  }
+  const cnext=document.getElementById('cnext');
+  if(cnext) cnext.onclick=()=>{
+    const missing=csMissingRequired(secNum,ans);
+    if(missing.length>0){
+      showToast('⚠ Please answer all required questions ('+missing.length+' remaining).');
+      csHighlightMissing(missing); return;
+    }
+    draft.sec=secNum+1; saveState(); go('chiefSurvey',{mode:'resume',sec:secNum+1});
+  };
+  document.getElementById('chome').onclick=()=>{ draft.sec=secNum; saveState(); go('home'); };
+  const csave=document.getElementById('csave');
+  if(csave) csave.onclick=()=>{
+    const missing=csMissingRequired(secNum,ans);
+    if(missing.length>0){
+      showToast('⚠ Please answer all required questions ('+missing.length+' remaining).');
+      csHighlightMissing(missing); return;
+    }
+    const s=STATE.setup||{};
+    const rec={village:s.villageNumber||'',run:s.run||1,villageName:s.villageName||'',villageType:s.villageType||'',date:s.date||'',facilitator:s.facilitatorName||'',savedAt:new Date().toISOString(),answers:Object.assign({},ans)};
+    if(!STATE.chiefSurveys) STATE.chiefSurveys=[];
+    STATE.chiefSurveys.push(rec);
+    STATE.chiefDraft=null;
+    saveState();
+    showToast('Chief Survey saved!');
+    go('home');
+  };
+}
+
+/* =============================================================================
+   STARTUP + back-button handling
+============================================================================= */
+window.addEventListener('load',()=>{
+  try{ history.replaceState({route,routeArgs,survey:true},'',''); }catch(e){}
+  try{ render(); }catch(e){ console.error('render error:',e); }
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+});
+/* iOS-safe: any back gesture just re-seeds history and re-renders current screen.
+   Never use beforeunload — it disables bfcache on iOS and causes full reloads. */
+window.addEventListener('popstate',()=>{
+  try{ history.pushState({route,routeArgs,survey:true},'',''); }catch(e){}
+  try{ render(); }catch(e){}
+});
+</script>
+</body>
+</html>

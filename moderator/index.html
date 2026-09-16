@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PGG Moderator">
+<title>PGG Moderator App</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+/* ===================== BASE ===================== */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; padding: 0;
+  font-family: -apple-system, "Segoe UI", "Microsoft JhengHei", "PingFang TC", Roboto, sans-serif;
+  background: #000;
+  color: #fff;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  height: 100%;
+}
+#app { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+
+/* ===================== HEADER ===================== */
+.header {
+  display: flex; align-items: center;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.25);
+  font-size: 20px; font-weight: 600;
+  gap: 10px;
+}
+.header .home-btn {
+  background: transparent; border: none; color: inherit;
+  font-size: 22px; padding: 4px 8px; cursor: pointer;
+}
+.header .title { flex: 1; }
+
+/* ===================== CONTENT ===================== */
+.content { flex: 1; padding: 16px; display: flex; flex-direction: column; }
+.content.center { justify-content: center; align-items: center; text-align: center; }
+
+h2 { font-size: 22px; margin: 8px 0 12px; font-weight: 600; }
+p, label { font-size: 17px; line-height: 1.45; }
+.big-msg { font-size: 21px; line-height: 1.55; margin: 12px 0; }
+.script-text { font-size: 21px; line-height: 1.6; text-align: center; margin: auto 0; }
+
+/* ===================== BUTTONS ===================== */
+.btn {
+  display: block; width: 100%;
+  padding: 18px 16px;
+  margin: 8px 0;
+  font-size: 19px;
+  font-weight: 600;
+  background: rgba(255,255,255,0.22);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: center;
+}
+.btn:active { background: rgba(255,255,255,0.35); }
+.btn.primary { background: rgba(255,255,255,0.32); }
+.btn.outline { background: transparent; border: 1.5px solid rgba(255,255,255,0.6); }
+.btn:disabled { opacity: 0.4; }
+.btn-row { display: flex; gap: 12px; }
+.btn-row .btn { flex: 1; }
+
+/* ===================== INPUTS ===================== */
+.field { margin: 14px 0; }
+.field label { display: block; margin-bottom: 6px; font-size: 15px; opacity: 0.9; }
+.field input, .field select, .field textarea {
+  width: 100%;
+  padding: 14px;
+  font-size: 17px;
+  background: transparent;
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.5);
+  border-radius: 18px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.field input { text-align: center; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: #fff; }
+.field select option { color: #000; }
+textarea { font-family: inherit; resize: vertical; min-height: 90px; }
+
+/* ===================== COLOUR PICKER ===================== */
+.colour-row { display: flex; justify-content: space-between; margin: 16px 4px; }
+.colour-dot {
+  width: 44px; height: 44px; border-radius: 50%;
+  cursor: pointer; border: 3px solid transparent; transition: transform 0.1s;
+}
+.colour-dot.selected { border-color: #fff; transform: scale(1.1); }
+
+/* ===================== CLOCK / TIMER ===================== */
+.clock-wrap { display:flex; flex-direction:column; align-items:center; margin: 8px 0 4px; }
+.clock {
+  width: 150px; height: 150px; border-radius: 50%;
+  border: 6px solid #fff; position: relative; margin-bottom: 8px;
+}
+.clock::before, .clock::after {
+  content:""; position:absolute; left:50%; top:50%;
+  background:#fff; transform-origin: bottom center; border-radius: 4px;
+}
+.clock::before { width:5px; height:38px; transform: translate(-50%,-100%) rotate(0deg); }
+.clock::after  { width:5px; height:52px; transform: translate(-50%,-100%) rotate(120deg); }
+.timer-num {
+  font-size: 56px; font-weight: 700; text-align:center;
+  background: rgba(255,255,255,0.22); border-radius: 999px;
+  padding: 10px 0; margin: 10px 0;
+}
+.timer-num.ringing { animation: flash 0.6s steps(2) infinite; }
+@keyframes flash { 0%{background:rgba(255,255,255,0.22);} 100%{background:rgba(255,90,90,0.55);} }
+.timer-label { text-align:center; opacity:0.9; font-size:16px; margin-bottom:6px; }
+
+/* ===================== VILLAGE-FUND CALC LIST ===================== */
+.vf-list { margin: 8px 0; }
+.vf-item {
+  display:flex; align-items:center; gap:12px;
+  padding: 12px 6px; border-bottom: 1px solid rgba(255,255,255,0.12);
+  font-size: 22px;
+}
+.vf-dot { width:34px; height:34px; border-radius:50%; flex:0 0 auto; }
+.vf-name { flex:1; }
+.vf-val {
+  min-width: 64px; text-align:center; font-weight:700;
+  border: 1.5px solid rgba(255,255,255,0.5); border-radius: 12px; padding: 6px 4px;
+  cursor:pointer; font-size:20px;
+}
+.vf-val.empty { opacity:0.5; }
+.vf-foot { margin-top:12px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.3); text-align:center; font-size:17px; }
+.vf-foot .big { font-size:30px; font-weight:700; }
+
+/* numeric keypad for VF entry */
+.keypad-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  display:flex; flex-direction:column; justify-content:flex-end; z-index: 2000;
+}
+.keypad-sheet { background:#111; border-radius:20px 20px 0 0; padding:16px; }
+.keypad-display {
+  font-size:44px; font-weight:700; text-align:center; margin:8px 0 14px;
+  background:rgba(255,255,255,0.18); border-radius:14px; padding:10px 0;
+}
+.keypad-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.keypad-grid button {
+  padding:18px 0; font-size:24px; font-weight:600;
+  background:rgba(255,255,255,0.2); color:#fff; border:none; border-radius:12px;
+}
+.keypad-grid button:active { background:rgba(255,255,255,0.4); }
+
+/* ===================== CHECKLIST (Material) ===================== */
+.check-item {
+  display:flex; align-items:flex-start; gap:12px;
+  padding:14px 8px; border-bottom:1px solid rgba(255,255,255,0.12);
+  font-size:17px; cursor:pointer;
+}
+.check-item.sub { padding-left:28px; font-size:15px; opacity:0.95; }
+.check-box {
+  width:26px; height:26px; flex:0 0 auto; border:2px solid #fff;
+  border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:18px;
+}
+.check-box.checked { background:#fff; color:#000; }
+.page-indicator { text-align:center; opacity:0.8; font-size:14px; margin:6px 0; }
+
+/* ===================== TABLES ===================== */
+.table-wrap { overflow:auto; max-height:60vh; background:rgba(255,255,255,0.95);
+  border-radius:12px; margin:12px 0; -webkit-overflow-scrolling:touch; }
+table.grid { border-collapse:collapse; color:#222; font-size:13px; min-width:100%; }
+table.grid th, table.grid td { border:1px solid #ddd; padding:8px 6px; text-align:center; min-width:54px; background:#fff; }
+table.grid th { background:#e8eef7; font-weight:600; position:sticky; top:0; z-index:2; }
+table.grid td:first-child, table.grid th:first-child { position:sticky; left:0; background:#e8eef7; font-weight:600; z-index:1; }
+table.grid tr:last-child td { background:#f0f4fb; font-weight:600; }
+.scroll-hint { text-align:center; opacity:0.85; font-size:13px; margin:4px 0; }
+
+/* editable table (cash / others) */
+table.edit { width:100%; border-collapse:collapse; margin:10px 0; }
+table.edit th, table.edit td { border:1px solid rgba(255,255,255,0.3); padding:6px; font-size:14px; }
+table.edit th { background:rgba(255,255,255,0.12); }
+table.edit input { width:100%; background:transparent; border:none; color:#fff; text-align:center; font-size:15px; padding:8px 2px; outline:none; }
+table.edit input:focus { background:rgba(255,255,255,0.12); border-radius:6px; }
+
+/* ===================== LIST CARDS ===================== */
+.list-card {
+  background: rgba(255,255,255,0.22); border-radius:16px; padding:18px 16px; margin:10px 0;
+  font-size:18px; font-weight:500; display:flex; align-items:center; gap:12px; cursor:pointer;
+}
+.list-card .ic { font-size:22px; }
+
+/* ===================== UTILITY ===================== */
+.spacer { flex:1; }
+.muted { opacity:0.85; }
+hr.divider { border:none; border-top:1px solid rgba(255,255,255,0.4); margin:16px 0; }
+.note-flag { background:rgba(255,255,255,0.12); border-radius:12px; padding:12px; font-size:14px; margin:10px 0; }
+.toast {
+  position:fixed; bottom:20px; left:20px; right:20px; background:rgba(0,0,0,0.9);
+  color:#fff; padding:14px; border-radius:12px; text-align:center; font-size:15px; z-index:3000;
+}
+.seg-timer { text-align:center; font-size:18px; margin:14px 0; }
+.seg-timer .big { font-size:40px; font-weight:700; }
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.25); border-radius:3px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* =============================================================================
+   PGG MODERATOR APP — single-file offline PWA
+   Mirrors the hardened Facilitator app: localStorage persistence, locked
+   auto-flow, hardware-back blocking, beforeunload guard, resume-safe state.
+   Drives the moderator's scripted slideshow over all 18 rounds (Session 1: Phase A
+   silent R1-6 + Phase B discussion R7-12 = 12 rounds; Session 2: Phase C staggered-
+   chief discussion R13-18 (local R1-6) = 6 rounds) plus Issue logging, Chief tracking,
+   Village-Fund accounting, History, End-Experiment checklist, and CSV export.
+============================================================================= */
+
+/* ---------- CONSTANTS ---------- */
+const TOKENS_PER_ZAR = 1;          // 1 token = 1 ZAR
+const VF_RATE = 0.10;              // village fund = 10% of total room payoff
+const N_GROUPS = 6;
+const GROUP_ENDOWMENT = 40;        // 4 members x 10 tokens (reference only)
+const COLOURS = {                  // hex for the 6 group dots
+  Red:'#E8514D', Yellow:'#F2C53D', Blue:'#3E86D6',
+  Green:'#5FAE4E', Orange:'#E8872E', Purple:'#9B59C8'
+};
+// fixed colour order used everywhere: VF-calc screen, history table, CSVs
+const VF_ORDER = ['Red','Orange','Yellow','Green','Blue','Purple'];
+const HIST_ORDER = ['Red','Orange','Yellow','Green','Blue','Purple'];
+// group colour -> letter code (for participant IDs: letter_member, e.g. Red member 1 -> R_01)
+const COLOUR_CODE = { Red:'R', Orange:'O', Yellow:'Y', Green:'G', Blue:'B', Purple:'P' };
+
+/* ---------- STORAGE ---------- */
+const LS_KEY = 'pgg_moderator_state_v1';
+const IN_SUITE = !!localStorage.getItem('pgg_suite_shell');
+function makeFreshState() {
+  return {
+    setup: null,            // {villageNumber, villageName, moderatorName, date, villageType, chiefName}
+    started: false,
+    finished: false,
+    stepIndex: 0,           // pointer into the generated script
+    roundStartTs: null,     // ms — set when the current round's countdown begins (for chief offsets)
+    // timer resume support (so opening Issue mid-countdown is non-destructive)
+    timerStepIndex: null,
+    timerRemaining: null,
+    timerEndTs: null,       // absolute ms when current timer hits 0 (null = paused/none)
+    // village fund: vf[session][round] = { byColour:{Red:Number,...}, total, vf }
+    vf: { 1:{}, 2:{} },
+    // session metadata for CSV summary
+    sessionMeta: { 1:{startTs:null,endTs:null}, 2:{startTs:null,endTs:null} },
+    // logs
+    events: [],             // {type:'issue'|'left', session, round, note/id, ts, duration_sec}
+    chiefSegments: [],      // {session, round, segment_no, target, start_sec_from_round_start, start_ts, end_ts, duration_sec, quick_note}
+    // end-experiment data
+    material: {},           // id -> bool
+    receipt: { sumReceipts:'', offlineTotal:'', vfTokens:'', vfZar:'' },
+    cash: {
+      denoms: [
+        {label:'Notes — denom 1', kind:'notes', face:'', brought:'', remain:''},
+        {label:'Notes — denom 2', kind:'notes', face:'', brought:'', remain:''},
+        {label:'Notes — denom 3', kind:'notes', face:'', brought:'', remain:''},
+        {label:'Coins — denom 1', kind:'coins', face:'', brought:'', remain:''},
+        {label:'Coins — denom 2', kind:'coins', face:'', brought:'', remain:''}
+      ],
+      starting:'', paidOut:'', remaining:''
+    },
+    others: [ {item:'', qty:''}, {item:'', qty:''}, {item:'', qty:''} ],
+    seedsPurchased: '',
+    sessionNotes: ''
+  };
+}
+function loadState() {
+  try {
+    const s = localStorage.getItem(LS_KEY);
+    if (s) {
+      const p = JSON.parse(s);
+      const f = makeFreshState();
+      // shallow backfill of any new top-level keys
+      for (const k in f) if (!(k in p)) p[k] = f[k];
+      if (!p.vf) p.vf = {1:{},2:{}};
+      if (!p.sessionMeta) p.sessionMeta = f.sessionMeta;
+      return p;
+    }
+  } catch (e) {}
+  return null;
+}
+function saveState(){ try { localStorage.setItem(LS_KEY, JSON.stringify(STATE)); } catch(e){} }
+function resetState(){ localStorage.removeItem(LS_KEY); STATE = makeFreshState(); }
+let STATE = loadState() || makeFreshState();
+
+/* =============================================================================
+   SCRIPT BUILDER
+   Produces the full ordered list of steps. Pure function of setup — rebuilt on
+   every load; only stepIndex is persisted. Each step:
+     { kind, session, round, title, text, timerSec, timerLabel,
+       beginRound, startsCountdown, isFinalVF }
+============================================================================= */
+function silentTimerSec(localRound){ return localRound <= 2 ? 60 : 30; }   // R1-2: 60s, R3-6: 30s (Phase A, 6 rounds)
+// Phase B discussion time by position within the 6-round communication block (R7-R12):
+//   position 1 (R7) = 5 min, position 2 (R8) = 3 min, positions 3-6 (R9-R12) = 1 min
+function discussionMin(pos){ if (pos===1) return 5; if (pos===2) return 3; return 1; }
+// Phase C (staggered chief, R13-R18) total round length by position 1-6:
+//   odd positions (chief just moved in: R13/15/17) = 3 min, even positions (chief stays: R14/16/18) = 1 min.
+// This is the SAME room-wide length for every table — hosting vs non-hosting tables split their own
+// time locally (chief conversation vs pure group discussion); the moderator's cue and timer never differ
+// by table, per the field script's staff-only staggered-entry note (schedule is not announced).
+function phaseCMin(pos){ return (pos % 2 === 1) ? 3 : 1; }
+// which colour hosts the chief for Phase C position 1-6 (staff reference only — never spoken to the room)
+function phaseCHostColour(pos){ return pos<=2 ? 'Red' : (pos<=4 ? 'Blue' : 'Orange'); }
+
+function buildScript() {
+  const S = []; const setup = STATE.setup || {};
+  const modName = setup.moderatorName || '[Moderator name]';
+  const chief = setup.chiefName ? setup.chiefName : '[the chief / iNkosi / induna of this village, by name]';
+  const txt = (session, round, title, text, extra={}) =>
+    S.push(Object.assign({ kind:'text', session, round, title, text }, extra));
+  const timer = (session, round, sec, label) =>
+    S.push({ kind:'timer', session, round, timerSec:sec, timerLabel:label, title:'Experiment' });
+  const vfcalc = (session, round) =>
+    S.push({ kind:'vfcalc', session, round, title:`Session ${session}. Round ${round}` });
+  const vfann = (session, round) =>
+    S.push({ kind:'vfannounce', session, round, title:`Session ${session}. Round ${round}` });
+
+  /* ---------- 1.x  INTRO (read once, before Session 1) ---------- */
+  const T = 'Experiment Instruction';
+  txt(1,null,T,`My name is ${modName}, and I work with a research team from Taiwanese Academia Sinica and Nelson Mandela University. The other people you see here are my colleagues — six who are seated at each of your group tables, and one who registered you at the entrance.`);
+  txt(1,null,T,`We are here to learn about how communities in this area make decisions together. We are not from the government, and we are not from any party or NGO that gives benefits.`);
+  txt(1,null,T,`Before I begin explaining the process, please kindly turn off your mobile phone. We will have short breaks between sessions. You may use your phone during the breaks, but please do not discuss the experiment with anyone inside or outside the room.`);
+  txt(1,null,T,`Today's session will take approximately 2 and a half to 3 hours. There are two parts. In the first part, you will play a decision-making activity in small groups. The second part is a short questionnaire, conducted one-on-one.`);
+  txt(1,null,T,`For taking part today, each of you will receive a show-up fee of ZAR 30 for being here, plus an additional amount of money based on the choices you and others make in the activity.`);
+  txt(1,null,T,`Payment is in cash, in private, at the end of the session. We will explain how the money is earned in a few minutes. Before I hand out the consent forms, I want to flag one thing.`);
+  txt(1,null,T,`In some parts of today's session, your group is allowed to talk together before making a decision. When that happens, we may audio-record the group's discussion. This is only for our research analysis — to write down what people said and look at patterns of language.`);
+  txt(1,null,T,`The recordings will not be shared with anyone outside our research team. We will not share them with the chief, with the municipality, with employers, or with anyone in your community. [Please hand out the consent forms.] In front of you is a consent form. Please make sure that the ID printed in the top-right corner of the paper matches your assigned ID.`);
+  txt(1,null,T,`Please raise your hand at any point if you have a question. Please now tick the boxes you agree with, sign at the bottom, and pass the form to the facilitator who handed it to you.`);
+  txt(1,null,T,`We are going to play several cooperation games. In each round, every participant will receive 10 tokens. You will decide privately how many of those 10 tokens to put into the group account, and how many to keep in your private account.`);
+  txt(1,null,T,`We will play the game using an app. A facilitator will come to you and ask you to enter your decision. You may enter any whole number between 0 and 10 for the amount you would like to contribute to the group account.`);
+  txt(1,null,T,`No one except the facilitator will know your decision. Here is the rule. There are two parts.`);
+  txt(1,null,T,`Part 1 — Private account: every token you keep in your private account is yours. If you keep 5 tokens private, you earn 5 tokens.`);
+  txt(1,null,T,`Part 2 — Group account: whatever the four of you put into the group account is added together. We then multiply it by 2, and split the multiplied amount equally among all four people in the group.`);
+  txt(1,null,T,`Thus, each token you contribute to the group account will earn 0.5 tokens for each of the four people in your group.`);
+  txt(1,null,T,`This means that for every token you contribute, you personally receive 0.5 tokens back, while each of the other three group members also receives 0.5 tokens. You will also benefit from the contributions made by the other members of your group. [Pause. If anyone looks confused, repeat with the worked example below.]`);
+  txt(1,null,T,`Let me give you an example. Suppose each person starts with 10 tokens this round. Suppose you decide to put 4 tokens into the group account, and keep 6 tokens in your private account.`);
+  txt(1,null,T,`Now suppose, after we collect all four people's contributions, the total your group put into the group account adds up to 14 tokens. We multiply by 2: that is 28 tokens. We split this equally by 4: each person gets 7 tokens from the group account. So your earnings for this round are: 6 tokens you kept private, plus 7 from the group account, equals 13 tokens.`);
+  txt(1,null,T,`This is just an example. The decisions in the actual game are up to you, and the group total depends on what everyone in your group decides — which we won't know until after we collect everyone's contributions. Are there any questions before we go on? Please raise your hand.`);
+  txt(1,null,T,`After every round, your group facilitator will calculate the total amount in the group account and announce it to the group. The facilitator will then come to each of you individually to inform you of your personal earnings in private. You will have a Self-Record Table in front of you. [Please hand out the Self-Record Table.]`);
+  txt(1,null,T,`First, please make sure that the ID printed in the top-right corner of the sheet matches your assigned ID. There are six columns: A = your own contribution, B = your own private kept, C = the group total, D = C multiplied by 2, E = D divided by 4 (your share back), F = B plus E (your profit this round). [Pause. If anyone looks confused, repeat with the worked example below.]`);
+  txt(1,null,T,`This is so you can verify the calculation yourself. You will only hear your own group's total and your own earnings. You will not hear what each individual member of your group put in, and you will not hear other groups' totals. Please keep this sheet confidential. Do not share any information with others or look at other participants' sheets.`);
+  txt(1,null,T,`All the tokens you earn across all the rounds today will be added up at the end and converted to Rand. The exchange rate is 1 token = 1 ZAR, and this is fixed and announced now. You will be paid in cash, in private, at the end of the session.`);
+  txt(1,null,T,`There is also one more rule, called the village fund. After every round, we add up the total earnings of all 24 people in this room. We then set aside 10% of that total for the village fund.`);
+  txt(1,null,T,`The village fund is not paid to anyone in this room. It is used to buy agricultural seeds for the village — something that benefits the whole community. This rule is the same throughout today's session. After every round, I will announce to the whole room what the village fund has grown to, and roughly how many seeds it can buy so far.`);
+
+  /* ---------- helper: Phase A — silent block, rounds 1-6, no discussion ---------- */
+  function silentBlock(session, introScreens) {
+    const head = `Session ${session} Round`;
+    txt(session,1,'Experiment Instruction',`[Enter Experiment — Session ${session}, Rounds 1–6 (silent)]`);
+    introScreens();
+    for (let r=1; r<=6; r++) {
+      txt(session,r,`${head} ${r}`,`We will now begin Round ${r}.`,{beginRound:true,startsCountdown:true});
+      timer(session,r, silentTimerSec(r), `Round ${r} · decision time`);
+      txt(session,r,`${head} ${r}`,`Decision time is up. Facilitator will come to you one on one.`);
+      vfcalc(session,r);
+      vfann(session,r);
+    }
+  }
+  /* ---------- helper: a discussion block — shared by Phase B (no chief) and Phase C (staggered chief) ----------
+     Both phases look identical from the Moderator's side: a room-wide discussion timer of Tmin(pos)
+     minutes, then a room-wide 30-second decision timer. In Phase C the chief's staggered table visits
+     are managed silently by the Chief and the hosting table's Facilitator (see Chief Guidance doc /
+     Facilitator app) — the Moderator's cues stay generic on purpose, so hostColourFn is for internal
+     step metadata only and is never spoken. */
+  function discussionBlock(session, startRound, nRounds, minFn, introScreens, opts={}) {
+    const head = `Session ${session} Round`;
+    const endRound = startRound + nRounds - 1;
+    const label = opts.chiefActive ? 'chief + discussion' : 'discussion';
+    txt(session,startRound,'Experiment Instruction',`[Enter Experiment — Session ${session}, Rounds ${startRound}–${endRound} (${label})]`);
+    introScreens();
+    for (let ri=0; ri<nRounds; ri++) {
+      const r = startRound + ri;
+      const pos = ri + 1;                      // 1..nRounds position within this block
+      const Tmin = minFn(pos);
+      const hostColour = opts.hostColourFn ? opts.hostColourFn(pos) : null;   // staff-only, not spoken
+      const perRound = `Your group may discuss with each other before deciding. You have ${Tmin} minute${Tmin===1?'':'s'} for discussion this round. Remember: each person's contribution decision is private and final, and you cannot promise gifts or side payments.`;
+      txt(session,r,`${head} ${r}`, perRound, hostColour?{hostColour}:{});
+      txt(session,r,`${head} ${r}`,`We will now begin Round ${r}.`,{beginRound:true,startsCountdown:true});
+      timer(session,r, Tmin*60, `Round ${r} · discussion (${Tmin} min)`);
+      txt(session,r,`${head} ${r}`,`Discussion time is up. Please stop discussing and prepare your contributions. You will have 30 seconds to make decision.`);
+      timer(session,r, 30, `Round ${r} · decision (30s)`);
+      txt(session,r,`${head} ${r}`,`Decision time is up. Facilitator will come to you one on one.`);
+      vfcalc(session,r);
+      if (opts.isLastRound && ri===nRounds-1) {
+        S.push({ kind:'finalvf', session, round:r, title:'Total Village Fund' });
+      } else {
+        vfann(session,r);
+      }
+    }
+  }
+  /* ---------- helper: a break sequence ---------- */
+  function breakSeq(session, msg, minutes=3) {
+    txt(session,null,`Session ${session}`, msg, {startsCountdown:true});
+    timer(session,null, minutes*60, `Break · ${minutes} minutes`);
+    txt(session,null,`Session ${session}`,`Break time is over. Please return to your seats.`);
+  }
+
+  /* ---------- SESSION 1 (no chief): Phase A silent R1-6, then Phase B discussion R7-12 ---------- */
+  silentBlock(1, () => {
+    txt(1,1,'Session 1 Round 1',`We will now begin the first part of today's session. Please do not talk to anyone during the activity — not the people in your group, not other groups, and not the experimenters except to ask a quick clarifying question.`);
+    txt(1,1,'Session 1 Round 1',`Decisions are made silently. If something is unclear, please raise your hand and one of us will come over. Remember, in each round you will have 10 tokens to allocate.`);
+    txt(1,1,'Session 1 Round 1',`For the first two rounds, you will have one minute to make your decision. For the rest of the rounds, you will have 30 seconds. After each round, the facilitator will come to you to record your choice.`);
+  });
+  breakSeq(1,`That concludes Rounds 1 through 6 of Phase A. Please take a 3-minute break — you may use the restroom or have some water. We will resume in 3 minutes. Please leave your self-record table on your seat. Do not take it with you. Please also avoid discussing your decisions with anyone when you leave your seat.`);
+
+  discussionBlock(1, 7, 6, discussionMin, () => {
+    txt(1,7,'Session 1 Round 7',`We now have time for a new experiment. The basic rules — your endowment, the multiplier, the group account, the private account, and the village fund — are exactly the same as before. The only change is the following:`);
+    txt(1,7,'Session 1 Round 7',`From now on, before each round, your group has time to discuss with each other before deciding. The discussion time is: 5 minutes per round for the first round, 3 minutes per round for the next round, and 1 minute per round for each of the remaining rounds. After discussion, you will have 30 seconds to make your decision, and the facilitator will come to each of you to record your choice.`);
+    txt(1,7,'Session 1 Round 7',`One important rule applies during the discussion: you cannot use money, gifts, or anything else to make deals with other people. The only money anyone will receive today is the payment we give you at the end of the game.`);
+  });
+  breakSeq(1,`That concludes Rounds 7 through 12 of Phase B. Please take a 3-minute break — you may use the restroom or have some water — and we will then continue with the next session. Please leave your self-record table on your seat. Do not take it with you.`);
+
+  /* ---------- SESSION 2 (Phase C — staggered chief): discussion R13-18 (local R1-6) ----------
+     Chief hosts Group 1/Red for local R1-2 (global R13-14), Group 3/Blue for local R3-4 (R15-16),
+     Group 5/Orange for local R5-6 (R17-18). Groups 2/4/6 (Yellow/Green/Purple) never host and continue
+     open peer discussion throughout, exactly as in Phase B. This schedule is staff-only — it is stored
+     on each step as `hostColour` for the Chief Tracking / CSV log, and is NEVER read aloud by the
+     Moderator; the room-wide cue below stays identical every round regardless of who is hosting. */
+  discussionBlock(2, 1, 6, phaseCMin, () => {
+    txt(2,1,'Session 2 Round 1',`We now have time for a new experiment. The basic rules — your endowment, the multiplier, the group account, the private account, and the village fund — are exactly the same as before. The only change is the following:`);
+    txt(2,1,'Session 2 Round 1',`From this round onward, the chief will move around and may stop to speak with some of the tables. Whether or not the chief visits your table, your group will always have time to talk with each other before you decide.`);
+    txt(2,1,'Session 2 Round 1',`One important rule applies during the discussion: you cannot use money, gifts, or anything else to make deals with other people. The only money anyone will receive today is the payment we give you at the end of the game.`);
+  }, { chiefActive:true, hostColourFn:phaseCHostColour, isLastRound:true });
+
+  // after the final-VF screen: closing break + questionnaire hand-off (5 minutes per script)
+  breakSeq(2,`That concludes Rounds 13 through 18 of Phase C. Please take a 5-minute break — restroom or water — and we will then move to the questionnaire area. Please leave your self-record table on your seat. Do not take it with you.`, 5);
+
+  /* ---------- 6.x  QUESTIONNAIRE ---------- */
+  const Q = 'Questionnaire';
+  txt(2,null,Q,`[Enter Questionnaire]`);
+  txt(2,null,Q,`Before we hand out the payments, we would like to ask each of you a short set of questions about yourself, your household, and your views on community life. There are no right or wrong answers. If you do not wish to answer a question, you may skip it.`);
+  txt(2,null,Q,`Those of you who are able to read and write may take a paper copy and fill it in yourselves. Please use your chest sticker to identify yourself and look at the other participants' stickers in your relationship structure section, then answer the rest of the questions. If you have a question, please raise your hand and a facilitator will come to help.`);
+  txt(2,null,Q,`Those of you who would prefer help: a facilitator will sit with you privately and go through the questions together. We will translate and read each question aloud, and write down your answer for you.`);
+  txt(2,null,Q,`You can sign the receipt and grab your bonus as soon as you finish the questionnaire. That's all for today's experiment — thank you, everyone!`,{isEnd:true});
+
+  return S;
+}
+let SCRIPT = buildScript();
+
+/* =============================================================================
+   ROUTER
+============================================================================= */
+let route = STATE.setup ? 'home' : 'setup';
+let routeArgs = {};
+function go(name, args={}) {
+  route = name; routeArgs = args;
+  window.scrollTo(0,0);
+  try { history.pushState({route:name, routeArgs:args, pgg:true}, '', ''); } catch(e){}
+  render();
+}
+function isMidExperiment(){ return !!(STATE.started && !STATE.finished); }
+
+/* ---------- HELPERS ---------- */
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function showToast(msg, ms=1900){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),ms); }
+function curStep(){ return SCRIPT[STATE.stepIndex] || null; }
+function cumulativeVF(){ // sum of all recorded round VFs
+  let sum=0; for (const s of [1,2]) for (const r in STATE.vf[s]) sum += (STATE.vf[s][r].vf||0); return sum;
+}
+function fmtMMSS(sec){ const m=Math.floor(sec/60), s=sec%60; return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
+
+/* ---------- AUDIO ALARM (offline, no asset) ---------- */
+let AC=null, alarmTimers=[], audioUnlocked=false;
+function ensureAC(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==='suspended') AC.resume(); }
+/* iOS requires a direct user gesture to unlock AudioContext. Call this on any tap. */
+function unlockAudio(){
+  if(audioUnlocked) return;
+  ensureAC();
+  if(AC){ // play a silent beep to unlock
+    const o=AC.createOscillator(), g=AC.createGain();
+    g.gain.value=0.00001; o.connect(g); g.connect(AC.destination);
+    o.start(AC.currentTime); o.stop(AC.currentTime+0.01);
+    audioUnlocked=true;
+  }
+}
+function beepOnce(){ if(!AC) return; const o=AC.createOscillator(), g=AC.createGain(); o.type='square'; o.frequency.value=880; g.gain.value=0.0001; o.connect(g); g.connect(AC.destination); const t=AC.currentTime; g.gain.exponentialRampToValueAtTime(0.25,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.35); o.start(t); o.stop(t+0.36); }
+function startAlarm(){ stopAlarm(); ensureAC(); if(navigator.vibrate) navigator.vibrate([400,200,400,200,400]); for(let i=0;i<20;i++){ alarmTimers.push(setTimeout(beepOnce, i*500)); } }
+function stopAlarm(){ alarmTimers.forEach(clearTimeout); alarmTimers=[]; if(navigator.vibrate) navigator.vibrate(0); }
+
+/* =============================================================================
+   RENDER
+============================================================================= */
+/* live experiment-timer banner, shown on Issue screens so the moderator can
+   see how much round time is left while logging something. */
+let auxTicker=null;
+function stopAux(){ if(auxTicker){ clearInterval(auxTicker); auxTicker=null; } }
+function hasActiveExpTimer(){ return STATE.timerStepIndex!=null; }
+function expTimerBannerHtml(){
+  if(!hasActiveExpTimer()) return '';
+  return `<div style="text-align:center;background:rgba(255,255,255,0.18);border-radius:12px;padding:10px;margin-bottom:10px;font-size:15px;">⏱ Experiment timer: <span id="exp-timer-val" style="font-weight:700;">--:--</span></div>`;
+}
+function startExpTimerTicker(){
+  if(!hasActiveExpTimer()) return;
+  const upd=()=>{ const el=document.getElementById('exp-timer-val'); if(!el) return;
+    const rem=timerRemainingNow();
+    el.textContent = (STATE.timerEndTs==null?'paused · ':'') + (rem>0? fmtMMSS(rem)+' left' : "time's up"); };
+  upd(); auxTicker=setInterval(upd,1000);
+}
+
+function render(){
+  stopActiveTimer(); stopAux();
+  const app = document.getElementById('app');
+  app.innerHTML='';
+  const renderers = {
+    setup:renderSetup, home:renderHome,
+    step:renderStep,
+    issueMenu:renderIssueMenu, chiefTrack:renderChiefTrack, issueProblem:renderIssueProblem, participantLeft:renderParticipantLeft,
+    endMenu:renderEndMenu, endMaterial:renderEndMaterial, endReceipt:renderEndReceipt, endCash:renderEndCash, endOthers:renderEndOthers,
+    totalVF:renderTotalVF,
+    history:renderHistoryList, historyTable:renderHistoryTable,
+    exportData:renderExport,
+    jumpDashboard:renderJumpDashboard,
+    pastExperiments:renderPastExperiments
+  };
+  (renderers[route]||renderHome)(app);
+}
+
+/* ---------- SETUP (mock page 1) ---------- */
+function renderSetup(app){
+  app.innerHTML = `
+    <div class="header"><span class="title">🏠 Home · Setup</span></div>
+    <div class="content">
+      <h2 style="text-align:center">Setup</h2>
+      <div class="field"><label>Village Number</label><input id="f-vnum" type="number" inputmode="numeric"></div>
+      <div class="field"><label>Run (this village's experiment run)</label><input id="f-run" type="number" inputmode="numeric" min="1" value="1">
+        <span class="muted" style="font-size:13px;display:block;margin-top:4px;">1 = first run in this village. Use 2 if this village is being run a second time, so the two runs' participant IDs don't clash.</span>
+      </div>
+      <div class="field"><label>Village Name</label><input id="f-vname"></div>
+      <div class="field"><label>Your Name (Moderator)</label><input id="f-name"></div>
+      <div class="field"><label>Date</label><input id="f-date" type="date"></div>
+      <div class="field"><label>Village Type</label>
+        <select id="f-vtype">
+          <option value="">— Select —</option>
+          <option value="FORMER_HOMELAND">FORMER HOMELAND</option>
+          <option value="NON_FORMER_HOMELAND">NON-FORMER HOMELAND</option>
+        </select>
+      </div>
+      <div class="field"><label>Session PIN (4 digits — used for Jump Dashboard)</label><input id="f-pin" type="tel" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="e.g. 1234"></div>
+      <div class="field"><label>Chief name / ID (Session 2 — optional)</label><input id="f-chief"></div>
+      <button class="btn primary" id="save">Save &amp; Continue</button>
+    </div>`;
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+  if (STATE.setup){ const s=STATE.setup;
+    document.getElementById('f-vnum').value=s.villageNumber||'';
+    document.getElementById('f-run').value=s.run||'1';
+    document.getElementById('f-vname').value=s.villageName||'';
+    document.getElementById('f-name').value=s.moderatorName||'';
+    document.getElementById('f-date').value=s.date||'';
+    document.getElementById('f-vtype').value=s.villageType||'';
+    document.getElementById('f-pin').value=s.pin||'';
+    document.getElementById('f-chief').value=s.chiefName||'';
+  }
+  document.getElementById('save').onclick = () => {
+    const vnum=document.getElementById('f-vnum').value.trim();
+    const run=(document.getElementById('f-run').value.trim()||'1');
+    const vname=document.getElementById('f-vname').value.trim();
+    const name=document.getElementById('f-name').value.trim();
+    const date=document.getElementById('f-date').value;
+    const vtype=document.getElementById('f-vtype').value;
+    const pin=document.getElementById('f-pin').value.trim();
+    const chief=document.getElementById('f-chief').value.trim();
+    if(!vnum||!vname||!name){ showToast('Please fill in village number, name, and your name'); return; }
+    if(!vtype){ showToast('Please select Village Type'); return; }
+    if(pin && !/^\d{4}$/.test(pin)){ showToast('PIN must be 4 digits (or leave blank)'); return; }
+    STATE.setup={ villageNumber:vnum, run, villageName:vname, moderatorName:name, date, villageType:vtype, pin:pin||'', chiefName:chief };
+    SCRIPT = buildScript();
+    saveState(); go('home');
+  };
+}
+
+/* ---------- HOME (mock page 2) ---------- */
+function renderHome(app){
+  const resuming = isMidExperiment();
+  const st = curStep();
+  const where = st ? (st.round? `Session ${st.session} · Round ${st.round}` : `Session ${st.session}`) : '';
+  const banner = resuming ? `<div style="text-align:center;background:rgba(255,255,255,0.22);padding:12px;border-radius:12px;margin:8px 0;font-weight:600;">⚠ Experiment in progress<br><span style="font-weight:400;font-size:14px;">${escapeHtml(where)} · step ${STATE.stepIndex+1}/${SCRIPT.length}</span></div>` : '';
+  app.innerHTML = `
+    <div class="header"><span class="title">🏠 Home</span>${IN_SUITE?'<a href="../index.html" style="color:inherit;opacity:0.85;font-size:13px;text-decoration:none;">⇦ Suite</a>':''}</div>
+    <div class="content">
+      <div style="text-align:center;opacity:0.85;margin-bottom:6px;">
+        Village ${escapeHtml(String(STATE.setup.villageNumber).padStart(2,'0'))} · ${escapeHtml(STATE.setup.villageName)}<br>
+        Moderator: ${escapeHtml(STATE.setup.moderatorName)}
+      </div>
+      ${banner}
+      <hr class="divider">
+      <button class="btn primary" id="b-start">${resuming?'Resume Experiment':(STATE.finished?'Review Experiment':'Start Experiment')}</button>
+      <button class="btn" id="b-hist">History Record</button>
+      <button class="btn" id="b-vf">Total Village Fund</button>
+      <button class="btn" id="b-end">End Experiment</button>
+      <button class="btn" id="b-exp">Export to CSV</button>
+      <button class="btn outline" id="b-jump">🔀 Jump to Step</button>
+      <button class="btn outline" id="b-archive">📂 Past Experiments</button>
+      <div class="spacer"></div>
+      <button class="btn outline" id="b-reset">⚠ Reset All Data</button>
+    </div>`;
+  document.getElementById('b-start').onclick = () => {
+    if(!STATE.started){ STATE.started=true; STATE.stepIndex=0; saveState(); }
+    go('step');
+  };
+  document.getElementById('b-hist').onclick=()=>go('history');
+  document.getElementById('b-vf').onclick=()=>go('totalVF');
+  document.getElementById('b-end').onclick=()=>go('endMenu');
+  document.getElementById('b-exp').onclick=()=>go('exportData');
+  document.getElementById('b-jump').onclick=()=>go('jumpDashboard');
+  document.getElementById('b-archive').onclick=()=>go('pastExperiments');
+  document.getElementById('b-reset').onclick=()=>{ if(confirm('Reset all data? The current experiment will be archived so you can re-download its CSV.\n\nOK to archive & reset.')){ archiveCurrentExperiment(); STATE=makeFreshState(); SCRIPT=buildScript(); saveState(); route='setup'; render(); } };
+}
+
+/* =============================================================================
+   STEP RENDERER — text / timer / vfcalc / vfannounce / finalvf
+============================================================================= */
+function stampSessionStart(session){
+  if(STATE.sessionMeta[session].startTs==null){ STATE.sessionMeta[session].startTs = Date.now(); }
+}
+function gotoStep(i){
+  if(i<0) i=0;
+  if(i>=SCRIPT.length){ // finished
+    STATE.finished=true; STATE.stepIndex=SCRIPT.length-1; saveState(); go('home'); return;
+  }
+  STATE.stepIndex=i; saveState(); render();
+}
+function nextStep(){ gotoStep(STATE.stepIndex+1); }
+function prevStep(){ gotoStep(STATE.stepIndex-1); }
+
+function stepFooter(includeBack=true){
+  return `
+    <div class="btn-row" style="margin-top:14px;">
+      ${includeBack?`<button class="btn outline" id="s-back">Back</button>`:''}
+      <button class="btn primary" id="s-next">Next</button>
+    </div>
+    <button class="btn" id="s-issue" style="margin-top:6px;">Issue</button>`;
+}
+function wireFooter(){
+  const b=document.getElementById('s-back'); if(b) b.onclick=prevStep;
+  const n=document.getElementById('s-next'); if(n) n.onclick=nextStep;
+  const i=document.getElementById('s-issue'); if(i) i.onclick=()=>go('issueMenu');
+}
+
+function renderStep(app){
+  const st = curStep();
+  if(!st){ go('home'); return; }
+  stampSessionStart(st.session);
+  // mark round-start timestamp when a "begin round" screen is shown
+  if(st.beginRound){ STATE.roundStartTs = Date.now(); saveState(); }
+
+  if(st.kind==='text'){
+    app.innerHTML = `
+      <div class="header"><span class="title">${escapeHtml(st.title)}</span></div>
+      <div class="content">
+        <p class="script-text">${escapeHtml(st.text)}</p>
+        ${st.isEnd ? `<button class="btn primary" id="finish" style="margin-top:14px;">Finish &amp; return Home</button><button class="btn" id="s-issue">Issue</button>`
+                   : stepFooter(true)}
+      </div>`;
+    if(st.isEnd){
+      document.getElementById('finish').onclick=()=>{ STATE.finished=true; saveState(); go('home'); };
+      document.getElementById('s-issue').onclick=()=>go('issueMenu');
+    } else wireFooter();
+    return;
+  }
+
+  if(st.kind==='timer'){ renderTimerStep(app, st); return; }
+  if(st.kind==='vfcalc'){ renderVfCalc(app, st); return; }
+  if(st.kind==='vfannounce'){ renderVfAnnounce(app, st, false); return; }
+  if(st.kind==='finalvf'){ renderVfAnnounce(app, st, true); return; }
+}
+
+/* ---------- TIMER STEP (mock page 8) ----------
+   Wall-clock based: a timer started for the current step keeps running even if
+   the moderator opens the Issue page (the countdown does NOT pause). A global
+   background ticker rings the alarm if the timer expires while the moderator is
+   away; auto-advance only happens while the timer screen is in view. */
+let activeTimer=null;          // foreground display updater (timer screen only)
+let alarmedStep=null;          // stepIndex that has already rung, to avoid repeats
+function stopActiveTimer(){ if(activeTimer){ clearInterval(activeTimer); activeTimer=null; } }
+function timerRemainingNow(){
+  if(STATE.timerEndTs!=null) return Math.max(0, Math.round((STATE.timerEndTs-Date.now())/1000));
+  return STATE.timerRemaining!=null ? STATE.timerRemaining : 0;   // paused
+}
+function renderTimerStep(app, st){
+  stopAlarm();
+  // (re)start or resume the wall clock for this step
+  if(STATE.timerStepIndex!==STATE.stepIndex){
+    // fresh timer for this step
+    STATE.timerStepIndex=STATE.stepIndex;
+    STATE.timerRemaining=st.timerSec;
+    STATE.timerEndTs=Date.now()+st.timerSec*1000;
+    alarmedStep=null;
+    saveState();
+  } else if(STATE.timerEndTs==null && STATE.timerRemaining!=null && STATE.timerRemaining>0){
+    // returning to a paused timer — stay paused until Resume
+  } else if(STATE.timerEndTs==null && (STATE.timerRemaining==null)){
+    STATE.timerRemaining=st.timerSec; STATE.timerEndTs=Date.now()+st.timerSec*1000; saveState();
+  }
+  let paused = (STATE.timerEndTs==null);
+  let ringing=false;
+
+  app.innerHTML = `
+    <div class="header"><span class="title">Experiment</span></div>
+    <div class="content center">
+      ${!audioUnlocked ? `<div style="background:rgba(255,220,80,0.25);border:1.5px solid rgba(255,220,80,0.6);border-radius:12px;padding:10px;margin-bottom:10px;font-size:14px;text-align:center;">🔔 Tap <b>Unlock Sound</b> once to enable the alarm bell on this device (iOS requirement).<br><button id="t-unlock" style="background:rgba(255,220,80,0.4);border:none;border-radius:8px;padding:8px 18px;color:#fff;font-weight:700;font-size:15px;margin-top:6px;cursor:pointer;">Unlock Sound 🔔</button></div>` : ''}
+      <div class="timer-label">${escapeHtml(st.timerLabel||'')}</div>
+      <div class="clock-wrap"><div class="clock"></div></div>
+      <div class="timer-num" id="tnum">${fmtMMSS(timerRemainingNow())} left</div>
+      <div class="btn-row" style="width:100%;">
+        <button class="btn" id="t-pause">${paused?'Resume':'Pause'}</button>
+        <button class="btn" id="t-skip">Skip →</button>
+      </div>
+      <p class="muted" style="font-size:13px;text-align:center;margin:2px 0 8px;">Pause only if the round is interrupted (e.g. a disruption that stops the activity). For a quick raised-hand question, keep the timer running.</p>
+      <button class="btn" id="s-issue" style="width:100%;">Issue</button>
+    </div>`;
+  const numEl=document.getElementById('tnum');
+  const pauseBtn=document.getElementById('t-pause');
+  const unlockBtn=document.getElementById('t-unlock');
+  if(unlockBtn) unlockBtn.onclick=()=>{ unlockAudio(); unlockBtn.parentElement.remove(); };
+  ensureAC();
+
+  const myStep=STATE.stepIndex;
+  function finishTimer(){
+    if(STATE.timerStepIndex==null) return;            // already finished — ignore stale calls
+    stopActiveTimer(); stopAlarm();
+    STATE.timerStepIndex=null; STATE.timerRemaining=null; STATE.timerEndTs=null; alarmedStep=null;
+    saveState(); nextStep();
+  }
+  function onTimeUp(){
+    if(ringing) return;
+    ringing=true; numEl.classList.add('ringing'); numEl.textContent="Time's up";
+    startAlarm(); alarmedStep=STATE.stepIndex;
+    // auto-advance ~10s later, but only if still viewing this timer step
+    setTimeout(()=>{ if(route==='step' && STATE.stepIndex===myStep && STATE.timerStepIndex!=null){ stopAlarm(); finishTimer(); } }, 10000);
+  }
+  function tick(){
+    const rem=timerRemainingNow();
+    numEl.textContent = rem>0 ? `${fmtMMSS(rem)} left` : "Time's up";
+    if(rem<=0 && !paused) onTimeUp();
+  }
+  stopActiveTimer();
+  activeTimer=setInterval(tick,500);
+  if(timerRemainingNow()<=0 && !paused) onTimeUp();
+
+  pauseBtn.onclick=()=>{
+    unlockAudio();
+    if(STATE.timerEndTs!=null){ // -> pause
+      STATE.timerRemaining=timerRemainingNow(); STATE.timerEndTs=null; paused=true; pauseBtn.textContent='Resume';
+    } else { // -> resume
+      STATE.timerEndTs=Date.now()+ (STATE.timerRemaining||0)*1000; paused=false; pauseBtn.textContent='Pause';
+    }
+    saveState();
+  };
+  document.getElementById('t-skip').onclick=()=>{ unlockAudio(); finishTimer(); };
+  // opening Issue does NOT stop the wall clock; it keeps counting in the background
+  document.getElementById('s-issue').onclick=()=>{ go('issueMenu'); };
+}
+/* background ticker: rings the alarm if a running timer expires while the
+   moderator is on another screen (e.g. logging an Issue). */
+setInterval(()=>{
+  if(STATE.timerEndTs!=null && route!=='step'){
+    const rem=Math.round((STATE.timerEndTs-Date.now())/1000);
+    if(rem<=0 && alarmedStep!==STATE.timerStepIndex){ alarmedStep=STATE.timerStepIndex; startAlarm(); }
+  }
+},700);
+
+/* ---------- VF CALC (mock page 10) ---------- */
+let keypadCtx=null;
+function renderVfCalc(app, st){
+  const rec = STATE.vf[st.session][st.round] || { byColour:{}, total:0, vf:0 };
+  STATE.vf[st.session][st.round]=rec;
+  function rowsHtml(){
+    return VF_ORDER.map(c=>{
+      const v = rec.byColour[c];
+      const filled = (v!=null);
+      return `<div class="vf-item">
+        <span class="vf-dot" style="background:${COLOURS[c]}"></span>
+        <span class="vf-name">${c}</span>
+        <span class="vf-val ${filled?'':'empty'}" data-c="${c}">${filled?v:'＿＿'} ${filled?'✓':'✏️'}</span>
+      </div>`;
+    }).join('');
+  }
+  function recompute(){
+    const vals = VF_ORDER.map(c=>rec.byColour[c]).filter(v=>v!=null);
+    rec.total = vals.reduce((a,b)=>a+b,0);
+    rec.vf = Math.ceil(VF_RATE*rec.total);
+    const n = vals.length;
+    const cum = cumulativeVF();
+    document.getElementById('vf-pending').textContent = n<N_GROUPS?`Round VF: pending (${n}/${N_GROUPS})`:`Round VF: ${rec.vf} token`;
+    document.getElementById('vf-cum').innerHTML = `Cumulative VF: <span class="big">${cum}</span> token`;
+    document.getElementById('s-next').disabled = (n<N_GROUPS);
+    saveState();
+  }
+  app.innerHTML = `
+    <div class="header"><button class="home-btn" id="back">🏠</button><span class="title">${escapeHtml(st.title)}</span></div>
+    <div class="content">
+      <p class="muted" style="text-align:center;font-size:14px;margin:0 0 6px;">Tap each group and enter that group's total payoff ΣF (40–80).</p>
+      <div class="vf-list" id="vf-list">${rowsHtml()}</div>
+      <div class="vf-foot">
+        <div id="vf-pending">Round VF: pending (0/${N_GROUPS})</div>
+        <div id="vf-cum" style="margin-top:4px;"></div>
+      </div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn outline" id="s-back">Back</button>
+        <button class="btn primary" id="s-next">Next</button>
+      </div>
+      <button class="btn" id="s-issue" style="margin-top:6px;">Issue</button>
+    </div>`;
+  document.getElementById('back').onclick=()=>{ if(confirm('Return Home? Entries so far are saved.')) go('home'); };
+  document.getElementById('s-back').onclick=prevStep;
+  document.getElementById('s-next').onclick=()=>{
+    const n=VF_ORDER.map(c=>rec.byColour[c]).filter(v=>v!=null).length;
+    if(n<N_GROUPS){ showToast(`Enter all ${N_GROUPS} groups first`); return; }
+    nextStep();
+  };
+  document.getElementById('s-issue').onclick=()=>go('issueMenu');
+  function bindRows(){
+    app.querySelectorAll('.vf-val').forEach(el=>{
+      el.onclick=()=>openKeypad(el.dataset.c, rec.byColour[el.dataset.c], (val)=>{
+        if(val===null) delete rec.byColour[el.dataset.c]; else rec.byColour[el.dataset.c]=val;
+        document.getElementById('vf-list').innerHTML=rowsHtml(); bindRows(); recompute();
+      });
+    });
+  }
+  bindRows(); recompute();
+}
+function openKeypad(colour, current, cb){
+  let buf = (current!=null)?String(current):'';
+  const ov=document.createElement('div'); ov.className='keypad-overlay';
+  ov.innerHTML=`
+    <div class="keypad-sheet">
+      <div style="text-align:center;font-size:16px;margin-bottom:2px;">${colour} group total payoff ΣF</div>
+      <div style="text-align:center;font-size:12px;opacity:0.7;margin-bottom:4px;">must be between 40 and 80</div>
+      <div class="keypad-display" id="kd">${buf||'0'}</div>
+      <div class="keypad-grid">
+        ${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}
+        <button data-k="clear">C</button>
+        <button data-k="0">0</button>
+        <button data-k="back">⌫</button>
+      </div>
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn outline" id="k-cancel">Cancel</button>
+        <button class="btn primary" id="k-ok">OK</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  const disp=ov.querySelector('#kd');
+  ov.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k;
+    if(k==='clear') buf='';
+    else if(k==='back') buf=buf.slice(0,-1);
+    else if(buf.length<2) buf+=k;           // cap at 2 digits — avoids 3-digit typos
+    if(buf.length>1) buf=String(parseInt(buf,10)); // strip leading zeros
+    disp.textContent=buf||'0';
+  });
+  ov.querySelector('#k-cancel').onclick=()=>ov.remove();
+  ov.querySelector('#k-ok').onclick=()=>{
+    if(buf===''){ cb(null); ov.remove(); return; }   // empty = clear this group
+    const v = parseInt(buf,10);
+    if(v<40 || v>80){ showToast('ΣF must be 40–80 — please re-check this group.'); return; }  // reject; stay open
+    cb(v); ov.remove();
+  };
+}
+
+/* ---------- VF ANNOUNCE (mock page 11) / FINAL (page 24 style) ---------- */
+function renderVfAnnounce(app, st, isFinal){
+  // ensure session end time updates as we announce
+  STATE.sessionMeta[st.session].endTs = Date.now(); saveState();
+  const cum = cumulativeVF();
+  const rec = STATE.vf[st.session][st.round] || {vf:0};
+  if(isFinal){
+    app.innerHTML = `
+      <div class="header"><span class="title">Total Village Fund</span></div>
+      <div class="content center">
+        <p class="big-msg">We've built up a total of</p>
+        <div class="timer-num" style="font-size:48px;">${cum} token</div>
+        <p class="big-msg">village fund across all of today's rounds.</p>
+        ${stepFooter(true)}
+      </div>`;
+    wireFooter(); return;
+  }
+  app.innerHTML = `
+    <div class="header"><span class="title">${escapeHtml(st.title)}</span></div>
+    <div class="content center">
+      <p class="big-msg">After Round ${st.round}, the village fund is now</p>
+      <div class="timer-num" style="font-size:46px;">${cum} token</div>
+      <p class="muted">(this round: +${rec.vf} token)</p>
+      ${stepFooter(true)}
+    </div>`;
+  wireFooter();
+}
+
+/* =============================================================================
+   ISSUE MENU + sub-screens (mock pages 13-16)
+============================================================================= */
+function renderIssueMenu(app){
+  app.innerHTML = `
+    <div class="header"><button class="home-btn" id="back">ⓘ</button><span class="title">Issue</span></div>
+    <div class="content">
+      ${expTimerBannerHtml()}
+      <div class="list-card" id="i-prob"><span class="ic">⚠️</span> Issue / Problem</div>
+      <div class="list-card" id="i-chief"><span class="ic">🎙</span> Chief Tracking</div>
+      <div class="list-card" id="i-left"><span class="ic">🚪</span> Participant left</div>
+      <button class="btn outline" id="i-return" style="margin-top:16px;">← Return to experiment</button>
+    </div>`;
+  startExpTimerTicker();
+  const ret = () => { STATE.started ? go('step') : go('home'); };
+  document.getElementById('back').onclick=ret;
+  document.getElementById('i-return').onclick=ret;
+  document.getElementById('i-prob').onclick=()=>go('issueProblem');
+  document.getElementById('i-chief').onclick=()=>go('chiefTrack');
+  document.getElementById('i-left').onclick=()=>go('participantLeft');
+}
+
+/* generic stopwatch used by the Issue sub-screens (counts up).
+   Pass fromTs to continue an already-running clock instead of resetting. */
+let segTimer=null, segStartTs=null;
+function startSegTimer(elId, fromTs){
+  segStartTs = fromTs || Date.now();
+  if(segTimer) clearInterval(segTimer);
+  const el=document.getElementById(elId);
+  function upd(){ const sec=Math.max(0,Math.floor((Date.now()-segStartTs)/1000)); if(el) el.textContent=fmtMMSS(sec); }
+  upd(); segTimer=setInterval(upd,1000);
+}
+function stopSegTimer(){ if(segTimer){ clearInterval(segTimer); segTimer=null; } const d = segStartTs? Math.round((Date.now()-segStartTs)/1000):0; segStartTs=null; return d; }
+function ctxSessionRound(){ const st=curStep(); return { session: st?st.session:null, round: st?st.round:null }; }
+// treatment_comm: 0 = silent decision rounds, 1 = communication/discussion rounds.
+// Derived purely from (session, round): S1 rounds 1-10 = silent, 11-20 = comm; S2 rounds 1-10 = comm (chief).
+function treatmentComm(session, round){ if (round==null) return ''; if (session===2) return 1; return round<=6 ? 0 : 1; } // S1 Phase A R1-6=silent, Phase B R7-12=comm
+function treatmentChief(session){ return session===2 ? 1 : 0; }                   // 0 = no chief (S1), 1 = chief (S2)
+// staff-reference only: which colour the chief was scheduled to host this round (Phase C / Session 2 local R1-6); '' otherwise
+function chiefHostColour(session, round){ return (session===2 && round>=1 && round<=6) ? phaseCHostColour(round) : ''; }
+function pad2(v){ const s=String(v==null?'':v).trim(); return s===''?'':s.padStart(2,'0'); }
+function runCode(){ return pad2((STATE.setup&&STATE.setup.run)||'1'); }            // village's experiment run (01, 02, …)
+
+/* ---------- ISSUE / PROBLEM (page 15) ---------- */
+function renderIssueProblem(app){
+  app.innerHTML = `
+    <div class="header"><span class="title">⚠️ Issue / Problem</span></div>
+    <div class="content">
+      ${expTimerBannerHtml()}
+      <div class="field"><label>Quick note (in English):</label><textarea id="note" placeholder="Describe the issue, in English…"></textarea></div>
+      <div class="seg-timer">Current segment:<br><span class="big" id="seg">00:00</span></div>
+      <button class="btn primary" id="save">Save &amp; Back</button>
+      <button class="btn outline" id="back">Back (discard)</button>
+    </div>`;
+  startSegTimer('seg'); startExpTimerTicker();
+  const finish = (saveIt) => {
+    const dur = stopSegTimer();
+    if(saveIt){
+      const c=ctxSessionRound();
+      STATE.events.push({ type:'issue', village:STATE.setup.villageNumber, session:c.session, round:c.round,
+        treatment_chief:treatmentChief(c.session), segment_no:STATE.events.length+1,
+        note:document.getElementById('note').value.trim(), id:'', ts:new Date().toISOString(), duration_sec:dur });
+      saveState(); showToast('Issue logged');
+    }
+    go('issueMenu');
+  };
+  document.getElementById('save').onclick=()=>finish(true);
+  document.getElementById('back').onclick=()=>finish(false);
+}
+
+/* ---------- PARTICIPANT LEFT (page 16) ----------
+   ID = colour code + member number (Red 01 -> 01_01, Orange -> 02, … Purple -> 06). */
+function renderParticipantLeft(app){
+  app.innerHTML = `
+    <div class="header"><span class="title">🚪 Participant left</span></div>
+    <div class="content">
+      ${expTimerBannerHtml()}
+      <div class="field"><label>Group</label>
+        <select id="pgrp">
+          ${VF_ORDER.map(c=>`<option value="${COLOUR_CODE[c]}">${COLOUR_CODE[c]} · ${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Member number (1–4)</label><input id="pmem" type="number" inputmode="numeric" min="1" max="4" placeholder="e.g. 3"></div>
+      <div class="seg-timer">Participant ID: <span class="big" id="pidview" style="font-size:24px;">＿＿</span></div>
+      <div class="seg-timer">Current segment:<br><span class="big" id="seg">00:00</span></div>
+      <button class="btn primary" id="save">Save &amp; Back</button>
+      <button class="btn outline" id="back">Back (discard)</button>
+    </div>`;
+  startSegTimer('seg'); startExpTimerTicker();
+  function composeId(){
+    const code=document.getElementById('pgrp').value;
+    const mem=document.getElementById('pmem').value.trim();
+    return (code && mem) ? `${code}_${String(parseInt(mem,10)).padStart(2,'0')}` : '';
+  }
+  function refreshId(){ const id=composeId(); document.getElementById('pidview').textContent = id || '＿＿'; }
+  document.getElementById('pgrp').onchange=refreshId;
+  document.getElementById('pmem').oninput=refreshId;
+  refreshId();
+  const finish=(saveIt)=>{
+    const dur=stopSegTimer();
+    if(saveIt){
+      const id=composeId();
+      if(!id){ showToast('Pick a group and member number'); return; }
+      const c=ctxSessionRound();
+      STATE.events.push({ type:'left', village:STATE.setup.villageNumber, session:c.session, round:c.round,
+        treatment_chief:treatmentChief(c.session), segment_no:STATE.events.length+1,
+        note:'', id, ts:new Date().toISOString(), duration_sec:dur });
+      saveState(); showToast('Logged: '+id);
+    }
+    go('issueMenu');
+  };
+  document.getElementById('save').onclick=()=>finish(true);
+  document.getElementById('back').onclick=()=>finish(false);
+}
+
+/* ---------- CHIEF TRACKING (page 14) ----------
+   The current-segment stopwatch starts the moment you enter this screen and
+   keeps running; tapping a target marks a new segment boundary (it does NOT
+   reset the stopwatch). Switching target closes the previous segment and opens
+   a new one; Save & Back closes the open segment. Segments feed the chief CSV. */
+let chiefScreenStartTs=null;
+let chiefTarget=null, chiefSegStartTs=null, chiefSegStartOffset=null, chiefSegNo=0, chiefNote='';
+function openChiefSegment(target){
+  closeChiefSegment(); // close any open one first
+  chiefTarget=target;
+  chiefSegStartTs=Date.now();
+  chiefSegStartOffset = STATE.roundStartTs? Math.max(0, Math.round((Date.now()-STATE.roundStartTs)/1000)) : null;
+}
+function closeChiefSegment(){
+  if(chiefTarget==null||chiefSegStartTs==null) return;
+  const end=Date.now();
+  const dur=Math.round((end-chiefSegStartTs)/1000);
+  const c=ctxSessionRound();
+  chiefSegNo++;
+  STATE.chiefSegments.push({
+    village:STATE.setup.villageNumber, session:c.session, round:c.round,
+    treatment_chief:treatmentChief(c.session), segment_no:chiefSegNo, target:chiefTarget,
+    start_sec_from_round_start: chiefSegStartOffset,
+    end_sec_from_round_start: (chiefSegStartOffset!=null? chiefSegStartOffset+dur : null),
+    start_ts:new Date(chiefSegStartTs).toISOString(), end_ts:new Date(end).toISOString(),
+    duration_sec:dur, quick_note:chiefNote
+  });
+  saveState();
+  chiefTarget=null; chiefSegStartTs=null; chiefSegStartOffset=null; chiefNote='';
+}
+function renderChiefTrack(app){
+  app.innerHTML = `
+    <div class="header"><span class="title">🎙 Chief Tracking</span></div>
+    <div class="content">
+      ${expTimerBannerHtml()}
+      <p style="text-align:center;margin:0 0 6px;">Chief is currently at:</p>
+      <div id="t-walk" class="list-card" data-t="Walking"><span class="ic">🚶</span> Walking / between</div>
+      <div id="t-front" class="list-card" data-t="Front"><span class="ic">🏛</span> Front (addressing all)</div>
+      <p style="text-align:center;margin:8px 0 2px;">Group:</p>
+      <div style="display:flex;justify-content:space-around;flex-wrap:wrap;gap:10px;margin:6px 0;">
+        ${VF_ORDER.map(c=>`<span class="vf-dot" data-t="${c}" style="background:${COLOURS[c]};width:46px;height:46px;border:3px solid transparent;cursor:pointer;"></span>`).join('')}
+      </div>
+      <div class="field"><label>Quick note:</label><textarea id="note" placeholder="Optional note for the current segment…"></textarea></div>
+      <div class="seg-timer">Current segment: <span class="big" id="seg" style="font-size:24px;">00:00</span><br>
+        <span id="cur" class="muted">Not tracking yet — tap where the chief is</span></div>
+      <button class="btn primary" id="save">Save &amp; Back</button>
+    </div>`;
+  const noteEl=document.getElementById('note');
+  noteEl.oninput=()=>{ chiefNote=noteEl.value; };
+  function refreshSel(){
+    app.querySelectorAll('[data-t]').forEach(el=>{
+      const on = el.dataset.t===chiefTarget;
+      if(el.classList.contains('list-card')) el.style.background = on?'rgba(255,255,255,0.4)':'rgba(255,255,255,0.22)';
+      else el.style.borderColor = on?'#fff':'transparent';
+    });
+    document.getElementById('cur').textContent = chiefTarget? `Tracking: ${chiefTarget}` : 'Not tracking yet — tap where the chief is';
+  }
+  function selectTarget(t){ openChiefSegment(t); refreshSel(); }   // does NOT reset the stopwatch
+  app.querySelectorAll('[data-t]').forEach(el=> el.onclick=()=>selectTarget(el.dataset.t));
+  document.getElementById('save').onclick=()=>{ closeChiefSegment(); if(segTimer){clearInterval(segTimer);segTimer=null;} go('issueMenu'); };
+  // start the continuous stopwatch on entry (resume if a segment was already open)
+  chiefScreenStartTs = chiefSegStartTs || Date.now();
+  startSegTimer('seg', chiefScreenStartTs);
+  startExpTimerTicker();
+  refreshSel();
+}
+
+/* =============================================================================
+   END EXPERIMENT (mock pages 17-21)
+============================================================================= */
+function renderEndMenu(app){
+  app.innerHTML = `
+    <div class="header"><button class="home-btn" id="back">🏠</button><span class="title">End Experiment</span></div>
+    <div class="content">
+      <button class="btn" id="m-mat">Material</button>
+      <button class="btn" id="m-rec">Receipt Cross-Check</button>
+      <button class="btn" id="m-cash">Cash Reconciliation</button>
+      <button class="btn" id="m-oth">Others</button>
+      <button class="btn outline" id="home2" style="margin-top:16px;">🏠 Home</button>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('home');
+  document.getElementById('home2').onclick=()=>go('home');
+  document.getElementById('m-mat').onclick=()=>go('endMaterial',{page:0});
+  document.getElementById('m-rec').onclick=()=>go('endReceipt');
+  document.getElementById('m-cash').onclick=()=>go('endCash');
+  document.getElementById('m-oth').onclick=()=>go('endOthers');
+}
+
+/* ---------- MATERIAL checklist with auto-pagination (page 21 + End_experiment.docx) ---------- */
+const MATERIAL_ITEMS = [
+  {id:'m1',  t:'24 × Z3.1 Consent forms (filed copies)'},
+  {id:'m1a', sub:true, t:'All signed'},
+  {id:'m1b', sub:true, t:'All scanned and uploaded'},
+  {id:'m2',  t:'24 × Z3.2 Self-Record Tables (Session 1)'},
+  {id:'m2a', sub:true, t:'Totals reconciled with offline app'},
+  {id:'m2b', sub:true, t:'All scanned and uploaded'},
+  {id:'m3',  t:'24 × Z4.1 Questionnaires'},
+  {id:'m3a', sub:true, t:'Checkpoint verified — contents complete'},
+  {id:'m3b', sub:true, t:'All scanned and uploaded'},
+  {id:'m4',  t:'24 × Z5.1 Signed payment receipts (filed copies)'},
+  {id:'m4a', sub:true, t:'All signed'},
+  {id:'m4b', sub:true, t:'Amount matches Z3.2 Self-Record Table'},
+  {id:'m4c', sub:true, t:'All scanned and uploaded'},
+  {id:'m5',  t:'1 × Z1.4 Participant Registry (selected)'},
+  {id:'m5a', sub:true, t:'Scanned and uploaded'},
+  {id:'m6',  t:'1 × Z1.5 Reserve list (not-selected registrants)'},
+  {id:'m6a', sub:true, t:'Scanned and uploaded'},
+  {id:'m7',  t:'1 × Z2.3 Group / ID Assignment Log × 24'},
+  {id:'m7a', sub:true, t:'Scanned and uploaded'},
+  {id:'m8',  t:'1 × Z1.2 Session timing & issue log × 24'},
+  {id:'m8a', sub:true, t:'Scanned and uploaded'},
+  {id:'m9',  t:'Audio recordings — communication rounds R11–R20'},
+  {id:'m9a', sub:true, t:'All transcribed'},
+  {id:'m9b', sub:true, t:'All uploaded'}
+];
+const MAT_PER_PAGE = 8;
+function renderEndMaterial(app){
+  const pages = Math.ceil(MATERIAL_ITEMS.length/MAT_PER_PAGE);
+  let page = routeArgs.page||0; if(page<0)page=0; if(page>=pages)page=pages-1;
+  const slice = MATERIAL_ITEMS.slice(page*MAT_PER_PAGE,(page+1)*MAT_PER_PAGE);
+  const items = slice.map(it=>{
+    const on = !!STATE.material[it.id];
+    return `<div class="check-item ${it.sub?'sub':''}" data-id="${it.id}">
+      <span class="check-box ${on?'checked':''}">${on?'✓':''}</span><span>${escapeHtml(it.t)}</span></div>`;
+  }).join('');
+  app.innerHTML = `
+    <div class="header"><button class="home-btn" id="back">🏠</button><span class="title">Material</span></div>
+    <div class="content">
+      <div class="page-indicator">Page ${page+1} / ${pages}</div>
+      ${items}
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn outline" id="prev" ${page===0?'disabled':''}>← Back</button>
+        ${page<pages-1?`<button class="btn primary" id="next">Next →</button>`:`<button class="btn primary" id="done">Done</button>`}
+      </div>
+      <button class="btn outline" id="menu" style="margin-top:6px;">End-Experiment menu</button>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('home');
+  document.getElementById('menu').onclick=()=>go('endMenu');
+  const prev=document.getElementById('prev'); if(prev) prev.onclick=()=>go('endMaterial',{page:page-1});
+  const next=document.getElementById('next'); if(next) next.onclick=()=>go('endMaterial',{page:page+1});
+  const done=document.getElementById('done'); if(done) done.onclick=()=>go('endMenu');
+  app.querySelectorAll('.check-item').forEach(el=>{
+    el.onclick=()=>{ const id=el.dataset.id; STATE.material[id]=!STATE.material[id]; saveState(); go('endMaterial',{page}); };
+  });
+}
+
+/* ---------- RECEIPT CROSS-CHECK (page 19) ---------- */
+function renderEndReceipt(app){
+  const r=STATE.receipt;
+  if(!r.vfTokens) r.vfTokens=String(cumulativeVF());
+  if(!r.vfZar) r.vfZar=String(Math.ceil(cumulativeVF()/TOKENS_PER_ZAR));
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">🏠</button><span class="title">Receipt cross-check</span></div>
+    <div class="content">
+      <p class="muted" style="text-align:center;font-size:14px;">Sum of all 24 Z5.1 receipts = offline-app session total</p>
+      <div class="field"><label>Sum of receipts (ZAR)</label><input id="r1" inputmode="numeric" value="${escapeHtml(r.sumReceipts)}"></div>
+      <div class="field"><label>Offline-app total (ZAR)</label><input id="r2" inputmode="numeric" value="${escapeHtml(r.offlineTotal)}"></div>
+      <hr class="divider">
+      <p class="muted" style="text-align:center;font-size:14px;">Village-fund total (10% of session-wide payoff)</p>
+      <div class="field"><label>Tokens</label><input id="r3" inputmode="numeric" value="${escapeHtml(r.vfTokens)}"></div>
+      <div class="field"><label>ZAR (÷${TOKENS_PER_ZAR}, ceiling)</label><input id="r4" inputmode="numeric" value="${escapeHtml(r.vfZar)}"></div>
+      <button class="btn primary" id="save">Save &amp; Back</button>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('home');
+  document.getElementById('save').onclick=()=>{
+    r.sumReceipts=document.getElementById('r1').value.trim();
+    r.offlineTotal=document.getElementById('r2').value.trim();
+    r.vfTokens=document.getElementById('r3').value.trim();
+    r.vfZar=document.getElementById('r4').value.trim();
+    saveState(); showToast('Saved'); go('endMenu');
+  };
+}
+
+/* ---------- CASH RECONCILIATION (page 18) ---------- */
+function renderEndCash(app){
+  const c=STATE.cash;
+  const rows=c.denoms.map((d,i)=>`
+    <tr>
+      <td style="text-align:left;">${escapeHtml(d.label)}<br><span style="opacity:0.7;font-size:12px;">ZAR <input data-i="${i}" data-f="face" value="${escapeHtml(d.face)}" style="width:54px;" inputmode="numeric"></span></td>
+      <td><input data-i="${i}" data-f="brought" value="${escapeHtml(d.brought)}" inputmode="numeric"></td>
+      <td><input data-i="${i}" data-f="remain" value="${escapeHtml(d.remain)}" inputmode="numeric"></td>
+    </tr>`).join('');
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">🏠</button><span class="title">Cash Reconciliation</span></div>
+    <div class="content">
+      <table class="edit">
+        <thead><tr><th></th><th>Brought (start)</th><th>Remaining (end)</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p class="muted" style="font-size:14px;text-align:center;">starting float − total paid out = remaining cash</p>
+      <div class="field"><label>Starting (ZAR)</label><input id="c-start" inputmode="numeric" value="${escapeHtml(c.starting)}"></div>
+      <div class="field"><label>Paid out (ZAR)</label><input id="c-paid" inputmode="numeric" value="${escapeHtml(c.paidOut)}"></div>
+      <div class="field"><label>Remaining (ZAR)</label><input id="c-rem" inputmode="numeric" value="${escapeHtml(c.remaining)}"></div>
+      <button class="btn primary" id="save">Save &amp; Back</button>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('home');
+  document.getElementById('save').onclick=()=>{
+    app.querySelectorAll('table.edit input').forEach(inp=>{ c.denoms[inp.dataset.i][inp.dataset.f]=inp.value.trim(); });
+    c.starting=document.getElementById('c-start').value.trim();
+    c.paidOut=document.getElementById('c-paid').value.trim();
+    c.remaining=document.getElementById('c-rem').value.trim();
+    saveState(); showToast('Saved'); go('endMenu');
+  };
+}
+
+/* ---------- OTHERS (page 20) ---------- */
+function renderEndOthers(app){
+  const o=STATE.others;
+  const rows=o.map((row,i)=>`
+    <tr><td><input data-i="${i}" data-f="item" value="${escapeHtml(row.item)}" placeholder="item" style="text-align:left;"></td>
+        <td><input data-i="${i}" data-f="qty" value="${escapeHtml(row.qty)}" placeholder="qty" inputmode="numeric"></td></tr>`).join('');
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">🏠</button><span class="title">Others</span></div>
+    <div class="content">
+      <p class="muted" style="text-align:center;font-size:14px;">Items brought, and quantities.</p>
+      <table class="edit"><thead><tr><th>Item</th><th>Qty</th></tr></thead><tbody id="obody">${rows}</tbody></table>
+      <button class="btn outline" id="addrow">+ Add row</button>
+      <hr class="divider">
+      <div class="field"><label>Seeds purchased (with village fund)</label><input id="seeds" inputmode="numeric" value="${escapeHtml(STATE.seedsPurchased)}"></div>
+      <div class="field"><label>Session notes</label><textarea id="notes">${escapeHtml(STATE.sessionNotes)}</textarea></div>
+      <button class="btn primary" id="save">Save &amp; Back</button>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('home');
+  function collect(){ app.querySelectorAll('#obody input').forEach(inp=>{ o[inp.dataset.i][inp.dataset.f]=inp.value.trim(); }); }
+  document.getElementById('addrow').onclick=()=>{ collect(); o.push({item:'',qty:''}); STATE.seedsPurchased=document.getElementById('seeds').value.trim(); STATE.sessionNotes=document.getElementById('notes').value; saveState(); go('endOthers'); };
+  document.getElementById('save').onclick=()=>{ collect(); STATE.seedsPurchased=document.getElementById('seeds').value.trim(); STATE.sessionNotes=document.getElementById('notes').value; saveState(); showToast('Saved'); go('endMenu'); };
+}
+
+/* =============================================================================
+   TOTAL VILLAGE FUND (mock page 24)
+============================================================================= */
+function renderTotalVF(app){
+  const cum=cumulativeVF();
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">🏠</button><span class="title">Total Village Fund</span></div>
+    <div class="content center">
+      <p class="big-msg">Total Village Fund IS</p>
+      <div class="timer-num" style="font-size:52px;">${cum} token</div>
+      <p class="muted">≈ R ${Math.ceil(cum/TOKENS_PER_ZAR)} (÷${TOKENS_PER_ZAR}, ceiling)</p>
+      <button class="btn outline" id="back2" style="margin-top:18px;">🏠 Home</button>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('home');
+  document.getElementById('back2').onclick=()=>go('home');
+}
+
+/* =============================================================================
+   HISTORY (mock pages 22-23)
+============================================================================= */
+function renderHistoryList(app){
+  const opts=[
+    {s:1,lo:1,hi:4,label:'Session 1 · Round 1–4 (silent)'},
+    {s:1,lo:5,hi:8,label:'Session 1 · Round 5–8 (discussion)'},
+    {s:2,lo:1,hi:4,label:'Session 2 · Round 1–4 (chief)'}
+  ];
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">🏠</button><span class="title">History Record</span></div>
+    <div class="content">
+      ${opts.map(o=>`<div class="list-card" data-s="${o.s}" data-lo="${o.lo}" data-hi="${o.hi}">${o.label}</div>`).join('')}
+      <button class="btn outline" id="home2" style="margin-top:16px;">🏠 Home</button>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('home');
+  document.getElementById('home2').onclick=()=>go('home');
+  app.querySelectorAll('.list-card').forEach(el=> el.onclick=()=>go('historyTable',{session:Number(el.dataset.s),lo:Number(el.dataset.lo),hi:Number(el.dataset.hi)}));
+}
+function renderHistoryTable(app){
+  const {session,lo,hi}=routeArgs;
+  const rounds=[]; for(let r=lo;r<=hi;r++) rounds.push(r);
+  const rangeLabel = `${lo}-${hi}`;
+  let body=''; const colTot={}; HIST_ORDER.forEach(c=>colTot[c]=0); let gTot=0, vfTot=0;
+  rounds.forEach(rn=>{
+    const rec=(STATE.vf[session]||{})[rn];
+    const cells=HIST_ORDER.map(c=>{ const v=rec&&rec.byColour?rec.byColour[c]:null; if(v!=null) colTot[c]+=v; return `<td>${v!=null?v:''}</td>`; }).join('');
+    const tot=rec?rec.total:''; const vf=rec?rec.vf:'';
+    if(rec){ gTot+=rec.total; vfTot+=rec.vf; }
+    body+=`<tr><td>${rn}</td>${cells}<td>${tot}</td><td>${vf}</td></tr>`;
+  });
+  const totCells=HIST_ORDER.map(c=>`<td>${colTot[c]}</td>`).join('');
+  body+=`<tr><td>Total</td>${totCells}<td>${gTot}</td><td>${vfTot}</td></tr>`;
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">🏠</button><span class="title">Session ${session} · Round ${rangeLabel}</span></div>
+    <div class="content">
+      <div class="scroll-hint">⇆ scroll left/right · ↕ up/down · values = each group's ΣF; VF = ⌈10%×total⌉</div>
+      <div class="table-wrap">
+        <table class="grid">
+          <thead><tr><th>Round</th>${HIST_ORDER.map(c=>`<th>${c.toLowerCase()}</th>`).join('')}<th>total</th><th>VF</th></tr></thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+      <div class="btn-row">
+        <button class="btn outline" id="back2">← Back</button>
+        <button class="btn outline" id="home2">🏠 Home</button>
+      </div>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('home');
+  document.getElementById('back2').onclick=()=>go('history');
+  document.getElementById('home2').onclick=()=>go('home');
+}
+
+/* =============================================================================
+   EXPORT TO CSV — three offline downloads (summary, chief segments, VF rounds)
+============================================================================= */
+function csvCell(v){ return v==null?'':String(v).replace(/[",\n]/g,' '); }
+function download(name, csv){
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },1000);
+}
+function durMin(ms){ return ms? Math.round(ms/60000*100)/100 : ''; }
+function buildSummaryCSV(){
+  const s=STATE.setup; const run=runCode();
+  const header=['village_number','run','village_name','village_type','session','date','start_time','end_time','duration_min','treatment_chief','chief_id','chief_total_speech_sec','village_fund_total_token','village_fund_total_zar','seeds_purchased','n_events_logged','session_notes'];
+  let out=header.join(',')+'\n';
+  for(const sess of [1,2]){
+    const meta=STATE.sessionMeta[sess]||{};
+    const start=meta.startTs?new Date(meta.startTs).toISOString():'';
+    const end=meta.endTs?new Date(meta.endTs).toISOString():'';
+    const dur=(meta.startTs&&meta.endTs)?durMin(meta.endTs-meta.startTs):'';
+    const treat = treatmentChief(sess);          // 0 = no chief (S1), 1 = chief (S2)
+    const chiefSpeech = sess===2 ? STATE.chiefSegments.filter(x=>x.session===2 && x.target!=='Walking').reduce((a,b)=>a+(b.duration_sec||0),0) : 0;
+    const vfTokens = Object.values(STATE.vf[sess]||{}).reduce((a,b)=>a+(b.vf||0),0);
+    const vfZar = Math.ceil(vfTokens/TOKENS_PER_ZAR);
+    const nEvents = STATE.events.filter(e=>e.session===sess).length;
+    const row=[ s.villageNumber, run, s.villageName, s.villageType, sess, s.date, start, end, dur,
+      treat, sess===2?(s.chiefName||''):'', sess===2?chiefSpeech:'', vfTokens, vfZar,
+      STATE.seedsPurchased, nEvents, STATE.sessionNotes ].map(csvCell).join(',');
+    out+=row+'\n';
+  }
+  return out;
+}
+function buildChiefCSV(){
+  const s=STATE.setup; const run=runCode();
+  const header=['village','run','session','treatment_chief','treatment_comm','round','segment_no','target','start_sec_from_round_start','end_sec_from_round_start','duration_sec','quick_note'];
+  let out=header.join(',')+'\n';
+  STATE.chiefSegments.forEach(x=>{
+    out+=[ s.villageNumber, run, x.session, (x.treatment_chief!=null?x.treatment_chief:treatmentChief(x.session)), treatmentComm(x.session,x.round), x.round,
+      x.segment_no, x.target, x.start_sec_from_round_start, x.end_sec_from_round_start, x.duration_sec, x.quick_note ].map(csvCell).join(',')+'\n';
+  });
+  return out;
+}
+function buildVfCSV(){
+  const s=STATE.setup; const run=runCode();
+  const header=['village','run','session','treatment_chief','treatment_comm','round','chief_host_colour', ...VF_ORDER.map(c=>'payoff_'+c), 'round_total_payoff','round_vf_token','cumulative_vf_token'];
+  let out=header.join(',')+'\n'; let cum=0;
+  for(const sess of [1,2]){
+    const rounds=Object.keys(STATE.vf[sess]||{}).map(Number).sort((a,b)=>a-b);
+    rounds.forEach(rn=>{
+      const rec=STATE.vf[sess][rn]; cum+=rec.vf||0;
+      out+=[ s.villageNumber, run, sess, treatmentChief(sess), treatmentComm(sess,rn), rn, chiefHostColour(sess,rn), ...VF_ORDER.map(c=>rec.byColour[c]!=null?rec.byColour[c]:''), rec.total, rec.vf, cum ].map(csvCell).join(',')+'\n';
+    });
+  }
+  return out;
+}
+function buildEventsCSV(){   // all Issue/Problem + Participant-left logs
+  const s=STATE.setup; const run=runCode();
+  const header=['village','run','session','treatment_chief','treatment_comm','round','segment_no','type','participant_id','note','duration_sec','timestamp'];
+  let out=header.join(',')+'\n';
+  STATE.events.forEach(e=>{
+    const vil = (e.village!=null?e.village:s.villageNumber);
+    // CSV participant_id is four-part: {village}_{run}_{colour_code}_{member}, e.g. 01_01_05_02
+    // (e.id is the two-part {colour_code}_{member} shown in the UI, e.g. 05_02)
+    const pid = e.id ? `${pad2(vil)}_${run}_${e.id}` : '';
+    out+=[ vil, run, e.session, (e.treatment_chief!=null?e.treatment_chief:treatmentChief(e.session)), treatmentComm(e.session,e.round),
+      e.round, e.segment_no, e.type, pid, e.note||'', e.duration_sec, e.ts ].map(csvCell).join(',')+'\n';
+  });
+  return out;
+}
+function buildMaterialCSV(){  // End-Experiment material checklist
+  const s=STATE.setup; const run=runCode();
+  const header=['village','run','date','item_id','is_subitem','checked','item_text'];
+  let out=header.join(',')+'\n';
+  MATERIAL_ITEMS.forEach(it=>{
+    out+=[ s.villageNumber, run, s.date, it.id, it.sub?1:0, STATE.material[it.id]?1:0, it.t ].map(csvCell).join(',')+'\n';
+  });
+  return out;
+}
+function buildCashCSV(){      // cash reconciliation (key/value, robust)
+  const s=STATE.setup; const c=STATE.cash; const run=runCode();
+  const header=['village','run','date','field','value'];
+  let out=header.join(',')+'\n';
+  const push=(f,v)=>{ out+=[ s.villageNumber, run, s.date, f, v ].map(csvCell).join(',')+'\n'; };
+  c.denoms.forEach((d,i)=>{
+    const tag=(d.label||('denom_'+(i+1))).replace(/[^A-Za-z0-9]+/g,'_');
+    push(tag+'__face_zar', d.face);
+    push(tag+'__brought', d.brought);
+    push(tag+'__remaining', d.remain);
+  });
+  push('starting_zar', c.starting);
+  push('paid_out_zar', c.paidOut);
+  push('remaining_zar', c.remaining);
+  return out;
+}
+function buildOthersCSV(){     // Others (items + seeds + notes)
+  const s=STATE.setup; const run=runCode();
+  const header=['village','run','date','row_type','item','quantity'];
+  let out=header.join(',')+'\n';
+  STATE.others.filter(r=>r.item||r.qty).forEach(r=>{
+    out+=[ s.villageNumber, run, s.date, 'item', r.item, r.qty ].map(csvCell).join(',')+'\n';
+  });
+  out+=[ s.villageNumber, run, s.date, 'seeds_purchased', '', STATE.seedsPurchased ].map(csvCell).join(',')+'\n';
+  out+=[ s.villageNumber, run, s.date, 'session_notes', STATE.sessionNotes, '' ].map(csvCell).join(',')+'\n';
+  return out;
+}
+function buildReceiptCSV(){    // receipt cross-check (key/value)
+  const s=STATE.setup; const r=STATE.receipt; const run=runCode();
+  const header=['village','run','date','field','value'];
+  let out=header.join(',')+'\n';
+  const push=(f,v)=>{ out+=[ s.villageNumber, run, s.date, f, v ].map(csvCell).join(',')+'\n'; };
+  const num=v=>{ const n=parseFloat(v); return isNaN(n)?null:n; };
+  push('sum_receipts_zar', r.sumReceipts);
+  push('offline_app_total_zar', r.offlineTotal);
+  push('match', (num(r.sumReceipts)!=null && num(r.sumReceipts)===num(r.offlineTotal))?1:0);
+  push('village_fund_total_token', r.vfTokens);
+  push('village_fund_total_zar', r.vfZar);
+  return out;
+}
+function renderExport(app){
+  const fnBase=`MOD_${STATE.setup.villageNumber}_${STATE.setup.date}`;
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">🏠</button><span class="title">Export Data</span></div>
+    <div class="content">
+      <p>Download CSV files (works fully offline):</p>
+      <button class="btn primary" id="dl-all">📥 Download all CSVs</button>
+      <hr class="divider">
+      <button class="btn" id="dl-sum">Session summary</button>
+      <button class="btn" id="dl-vf">Village fund by round</button>
+      <button class="btn" id="dl-chief">Chief segments</button>
+      <button class="btn" id="dl-evt">Issue / participant-left log</button>
+      <button class="btn" id="dl-mat">End-Exp · Material checklist</button>
+      <button class="btn" id="dl-rec">End-Exp · Receipt cross-check</button>
+      <button class="btn" id="dl-cash">End-Exp · Cash reconciliation</button>
+      <button class="btn" id="dl-oth">End-Exp · Others</button>
+      <button class="btn outline" id="copy-sum">📋 Copy summary to clipboard</button>
+      <div id="prev" style="margin-top:12px;max-height:38vh;overflow:auto;background:rgba(255,255,255,0.1);padding:8px;border-radius:8px;font-family:monospace;font-size:11px;white-space:pre;"></div>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('home');
+  const files={
+    summary:buildSummaryCSV(), villagefund:buildVfCSV(), chief_segments:buildChiefCSV(),
+    issue_log:buildEventsCSV(), material:buildMaterialCSV(), receipt:buildReceiptCSV(),
+    cash:buildCashCSV(), others:buildOthersCSV()
+  };
+  document.getElementById('prev').textContent='— Session summary —\n'+files.summary+'\n— Village fund —\n'+files.villagefund;
+  const dl=(key)=>download(`${fnBase}_${key}.csv`, files[key]);
+  document.getElementById('dl-sum').onclick=()=>dl('summary');
+  document.getElementById('dl-vf').onclick=()=>dl('villagefund');
+  document.getElementById('dl-chief').onclick=()=>dl('chief_segments');
+  document.getElementById('dl-evt').onclick=()=>dl('issue_log');
+  document.getElementById('dl-mat').onclick=()=>dl('material');
+  document.getElementById('dl-rec').onclick=()=>dl('receipt');
+  document.getElementById('dl-cash').onclick=()=>dl('cash');
+  document.getElementById('dl-oth').onclick=()=>dl('others');
+  document.getElementById('dl-all').onclick=()=>{ Object.keys(files).forEach((k,i)=> setTimeout(()=>dl(k), i*350)); showToast('Downloading all CSVs…'); };
+  document.getElementById('copy-sum').onclick=async()=>{ try{ await navigator.clipboard.writeText(files.summary); showToast('Copied'); }catch(e){ showToast('Clipboard unavailable — use Download'); } };
+}
+
+/* =============================================================================
+   JUMP DASHBOARD — PIN uses last 4 digits of village number, else any 4 digits if village < 4 digits
+============================================================================= */
+function renderJumpDashboard(app){
+  const pinOk = routeArgs.pinOk || false;
+  if(!pinOk){
+    app.innerHTML = `
+      <div class="header"><button class="home-btn" id="back">🏠</button><span class="title">Jump to Step</span></div>
+      <div class="content center">
+        <p class="big-msg">Enter session PIN to access Jump Dashboard</p>
+        <p style="font-size:13px;opacity:0.75;margin:4px 0 12px;">Allows jumping to any script step. Use to recover after a crash or skip intentionally.</p>
+        <div class="pin-row" id="pin-row">
+          <div class="pin-box" style="width:36px;height:44px;border:2px solid #fff;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;margin:4px;min-width:36px;"></div>
+          <div class="pin-box" style="width:36px;height:44px;border:2px solid #fff;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;margin:4px;min-width:36px;"></div>
+          <div class="pin-box" style="width:36px;height:44px;border:2px solid #fff;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;margin:4px;min-width:36px;"></div>
+          <div class="pin-box" style="width:36px;height:44px;border:2px solid #fff;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;margin:4px;min-width:36px;"></div>
+        </div>
+        <input style="opacity:0;position:absolute;pointer-events:none;" id="pin-in" type="tel" inputmode="numeric" maxlength="4">
+        <div id="pin-err" style="color:#ff9090;margin:8px 0;font-size:14px;"></div>
+        <button class="btn outline" id="focus-btn" style="max-width:200px;">Tap to type PIN</button>
+      </div>`;
+    document.getElementById('back').onclick=()=>go('home');
+    const pinIn=document.getElementById('pin-in');
+    const boxes=document.querySelectorAll('.pin-box');
+    const err=document.getElementById('pin-err');
+    // PIN = session PIN set during setup (fall back to last-4-digits of village number if not set)
+    const setupPin = STATE.setup && STATE.setup.pin;
+    const vnum=String(STATE.setup&&STATE.setup.villageNumber||'0000').replace(/\D/g,'').padStart(4,'0');
+    const PIN = setupPin && /^\d{4}$/.test(setupPin) ? setupPin : vnum.slice(-4);
+    document.getElementById('focus-btn').onclick=()=>pinIn.focus();
+    document.getElementById('pin-row').onclick=()=>pinIn.focus();
+    setTimeout(()=>pinIn.focus(),100);
+    pinIn.oninput=()=>{
+      const v=pinIn.value.replace(/\D/g,'').substring(0,4); pinIn.value=v;
+      boxes.forEach((b,i)=>b.textContent=v[i]?'•':'');
+      if(v.length===4){
+        if(v===PIN){ go('jumpDashboard',{pinOk:true}); }
+        else{ err.textContent='Wrong PIN — check Setup for your 4-digit PIN'; pinIn.value=''; boxes.forEach(b=>b.textContent=''); setTimeout(()=>pinIn.focus(),100); }
+      }
+    };
+    return;
+  }
+  // Show step list
+  let rows='';
+  SCRIPT.forEach((st,i)=>{
+    const isCur=(STATE.stepIndex===i);
+    const icon = isCur?'🔴':'⬜';
+    const lbl = st.round ? `S${st.session} R${st.round} — ${st.kind}` : `S${st.session||'?'} — ${st.kind}`;
+    const txt2 = (st.text||st.timerLabel||'').substring(0,40);
+    rows+=`<button class="btn ${isCur?'primary':''}" style="margin:3px 0;font-size:13px;padding:10px;text-align:left;" data-i="${i}">${icon} [${i+1}] ${lbl}<br><span style="font-size:11px;opacity:0.75;">${escapeHtml(txt2)}</span></button>`;
+  });
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">🏠</button><span class="title">Jump to Step (${SCRIPT.length} total)</span></div>
+    <div class="content">
+      <div class="note-flag" style="margin-bottom:8px;">⚠ Jumping overwrites the step pointer. VF data and logs are preserved. Use to recover after a crash or skip intentionally.</div>
+      ${rows}
+      <button class="btn outline" id="home2" style="margin-top:10px;">🏠 Home</button>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('home');
+  document.getElementById('home2').onclick=()=>go('home');
+  app.querySelectorAll('[data-i]').forEach(btn=>{
+    btn.onclick=()=>{
+      const idx=Number(btn.dataset.i);
+      if(!confirm(`Jump to step ${idx+1}?`)) return;
+      STATE.started=true; STATE.stepIndex=idx; saveState(); go('step');
+    };
+  });
+}
+
+/* =============================================================================
+   PAST EXPERIMENTS ARCHIVE
+============================================================================= */
+const ARCHIVE_KEY='pgg_mod_archive_v1';
+function loadArchive(){ try{ const s=localStorage.getItem(ARCHIVE_KEY); return s?JSON.parse(s):[]; }catch(e){ return []; } }
+function saveArchive(arr){ try{ localStorage.setItem(ARCHIVE_KEY,JSON.stringify(arr)); }catch(e){} }
+function archiveCurrentExperiment(){
+  if(!STATE.setup) return;
+  const archive=loadArchive();
+  const vnum=String(STATE.setup.villageNumber||'').padStart(2,'0');
+  const label=`Mod_V${vnum}_Run${STATE.setup.run||1}_${STATE.setup.date||''}`;
+  // build CSV from current state's export function
+  let csv=''; try{ csv=buildModCSV(); }catch(e){ csv=''; }
+  archive.push({label, date:new Date().toISOString(), csv, setup:Object.assign({},STATE.setup)});
+  saveArchive(archive);
+}
+function buildModCSV(){ /* minimal — export VF data */
+  const s=STATE.setup||{};
+  let out='session,round,'+VF_ORDER.join(',')+',total,vf\n';
+  [1,2].forEach(sess=>{
+    Object.keys(STATE.vf[sess]||{}).sort((a,b)=>Number(a)-Number(b)).forEach(rnd=>{
+      const rec=STATE.vf[sess][rnd]||{};
+      const vals=VF_ORDER.map(c=>rec.byColour&&rec.byColour[c]!=null?rec.byColour[c]:'').join(',');
+      out+=`${sess},${rnd},${vals},${rec.total||''},${rec.vf||''}\n`;
+    });
+  });
+  return out;
+}
+function renderPastExperiments(app){
+  const archive=loadArchive();
+  let rows='';
+  if(archive.length===0){
+    rows='<p class="muted" style="text-align:center;margin:24px 0;">No past experiments archived yet.<br>Experiments are saved here when you Reset All Data.</p>';
+  } else {
+    archive.slice().reverse().forEach((exp,ri)=>{
+      const i=archive.length-1-ri;
+      rows+=`<div class="list-card" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <div style="font-weight:700;font-size:16px;">📁 ${escapeHtml(exp.label)}</div>
+        <div style="font-size:13px;opacity:0.75;">Archived ${escapeHtml((exp.date||'').replace('T',' ').substring(0,16))}</div>
+        <button class="btn outline" style="margin:6px 0 0;padding:10px;font-size:14px;" data-dl="${i}">📥 Download VF CSV</button>
+      </div>`;
+    });
+  }
+  app.innerHTML=`
+    <div class="header"><button class="home-btn" id="back">🏠</button><span class="title">Past Experiments</span></div>
+    <div class="content">
+      ${rows}
+      <div class="spacer"></div>
+      <button class="btn outline" id="home2">🏠 Home</button>
+      ${archive.length>0?'<button class="btn" style="border-color:rgba(255,100,100,0.5);color:#ffd0d0;" id="ca">Clear archive</button>':''}
+    </div>`;
+  document.getElementById('back').onclick=()=>go('home');
+  document.getElementById('home2').onclick=()=>go('home');
+  const cab=document.getElementById('ca'); if(cab) cab.onclick=()=>{ if(confirm('Clear all archived experiments?')){ saveArchive([]); go('pastExperiments'); } };
+  app.querySelectorAll('[data-dl]').forEach(btn=>{
+    btn.onclick=(e)=>{
+      e.stopPropagation();
+      const exp=archive[Number(btn.dataset.dl)]; if(!exp) return;
+      const blob=new Blob([exp.csv],{type:'text/csv;charset=utf-8;'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download=exp.label+'.csv';
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },1000);
+    };
+  });
+}
+
+/* =============================================================================
+   STARTUP + iOS-safe back-button guard
+============================================================================= */
+window.addEventListener('load', () => {
+  try { history.replaceState({route,routeArgs,pgg:true},'',''); } catch(e){}
+  try { render(); } catch(e){ console.error('render error:',e); }
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+});
+
+/* iOS-safe: any back gesture just re-seeds history and re-renders current screen.
+   Never use beforeunload — it disables bfcache on iOS and causes full reloads. */
+window.addEventListener('popstate', () => {
+  try { history.pushState({route,routeArgs,pgg:true},'',''); } catch(e){}
+  try { render(); } catch(e){}
+});
+</script>
+</body>
+</html>

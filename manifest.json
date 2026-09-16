@@ -1,16 +1,13 @@
 {
-  "name": "PGG Suite",
-  "short_name": "PGG Suite",
-  "description": "Public Goods Game field experiment suite — Moderator, Facilitator, and Post-Experiment Survey apps with one shared setup.",
-  "lang": "en",
-  "dir": "ltr",
+  "name": "PGG Field App",
+  "short_name": "PGG",
+  "description": "Public Goods Game offline tally app for field experiment",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#000000",
-  "theme_color": "#000000",
-  "categories": ["productivity", "utilities"],
+  "theme_color": "#C8514D",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }

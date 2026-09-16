@@ -298,7 +298,7 @@ function renderManage(app) {
 const _origRender = render;
 render = function () { if (VIEW === 'manage') return renderManage(document.getElementById('app')); return _origRender(); };
 
-function backFromSetup() { if (ROLE === 'planner') go('select'); else go('teamsub'); }
+function backFromSetup() { if (ROLE === 'moderator' || ROLE === 'facilitator') go('teamsub'); else go('select'); }
 
 function renderSetup(app) {
   const shared = loadShared();
